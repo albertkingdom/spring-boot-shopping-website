@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -25,7 +26,7 @@ public class ProductController {
         return new ResponseEntity<Product>(newProduct, HttpStatus.OK);
     }
     @GetMapping
-    public List<Product> getAllProducts() {
+    public List<Product> getAllProducts(HttpSession session) {
         return productServiceImpl.getAllProducts();
     }
 

@@ -18,16 +18,17 @@ public class UserController {
     private UserRepository userRepository;
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
-    public String register(@RequestBody User user) {
+    public ResponseEntity<CustomResponse> register(@RequestBody User user) {
         userRepository.save(user);
-        return "Success register";
+        CustomResponse resultResponse = new CustomResponse("register success", null);
+        return new ResponseEntity<>(resultResponse, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public ResponseEntity<CustomResponse> login(@RequestBody User user, HttpSession session) {
         User existingUser = userRepository.findByEmailAndPassword(user.getEmail(), user.getPassword());
         if (existingUser != null) {
-            //session.setAttribute("user", existingUser);
+            session.setAttribute("user", existingUser);
             CustomResponse resultResponse = new CustomResponse("login success", existingUser.getName());
             return new ResponseEntity<>(resultResponse, HttpStatus.OK);
         }

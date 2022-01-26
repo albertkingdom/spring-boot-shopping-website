@@ -12,10 +12,10 @@ public class Product {
     private Long id;
     private String name;
     private Float price;
+//    @ManyToOne
+//    private Order order;
 
     public Product() {
-
-
     }
 
     public Long getId() {

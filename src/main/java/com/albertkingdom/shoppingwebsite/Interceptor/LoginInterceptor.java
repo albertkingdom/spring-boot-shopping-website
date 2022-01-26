@@ -1,5 +1,6 @@
 package com.albertkingdom.shoppingwebsite.Interceptor;
 
+import com.albertkingdom.shoppingwebsite.model.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -12,7 +13,8 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-
+//        User existingUser = (User) request.getSession().getAttribute("user");
+//        System.out.println(existingUser);
         if (request.getSession().getAttribute("user") == null && request.getMethod().equalsIgnoreCase("post")) {
 
 
@@ -22,6 +24,7 @@ public class LoginInterceptor implements HandlerInterceptor {
             response.setStatus(400);
             return false;
         }
+
         return true;
     }
 }
