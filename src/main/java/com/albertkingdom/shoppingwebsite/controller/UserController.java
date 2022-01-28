@@ -1,14 +1,17 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
+import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.model.CustomResponse;
 import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -18,7 +21,11 @@ public class UserController {
     private UserRepository userRepository;
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
-    public ResponseEntity<CustomResponse> register(@RequestBody User user) {
+    public ResponseEntity<CustomResponse> register(@Valid @RequestBody User user, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()){
+            throw new InvalidRequestException("Invalid parameter", bindingResult);
+        }
+
         userRepository.save(user);
         CustomResponse resultResponse = new CustomResponse("register success", null);
         return new ResponseEntity<>(resultResponse, HttpStatus.OK);
