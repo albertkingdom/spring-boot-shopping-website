@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-/*
-this class will: 1. check accept request and generate a token
+/* THIS CLASS IS UNUSED.
+* this class will: 1. check accept request and generate a token
  */
 public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;

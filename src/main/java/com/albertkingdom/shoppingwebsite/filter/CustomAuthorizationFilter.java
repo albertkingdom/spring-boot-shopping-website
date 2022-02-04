@@ -1,13 +1,16 @@
 package com.albertkingdom.shoppingwebsite.filter;
 
+import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -25,19 +28,23 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+@Component
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
+    @Autowired
+    private JwtUtil jwtUtil;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(request.getServletPath().equals("/api/login")) {
+        if(request.getServletPath().equals("/api/login") || request.getServletPath().equals("/api/refreshToken")) {
             filterChain.doFilter(request, response); // do nothing with request to /api/login
         } else {
             String authorizationHeader = request.getHeader(AUTHORIZATION);
             if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 try {
                     String token = authorizationHeader.substring("Bearer ".length());
-                    Algorithm algorithm = Algorithm.HMAC256("secret".getBytes()); // 提供jwt使用的簽名秘鑰
-                    JWTVerifier verifier = JWT.require(algorithm).build();
-                    DecodedJWT decodedJWT = verifier.verify(token);
+//                    Algorithm algorithm = Algorithm.HMAC256("secret".getBytes()); // 提供jwt使用的簽名秘鑰
+//                    JWTVerifier verifier = JWT.require(algorithm).build();
+//                    DecodedJWT decodedJWT = verifier.verify(token);
+                    DecodedJWT decodedJWT = jwtUtil.decodeJWT(token);
                     String username = decodedJWT.getSubject();
                     String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();

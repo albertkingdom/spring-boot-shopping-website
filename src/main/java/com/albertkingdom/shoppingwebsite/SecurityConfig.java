@@ -1,6 +1,6 @@
 package com.albertkingdom.shoppingwebsite;
 
-import com.albertkingdom.shoppingwebsite.filter.CustomAuthenticationFilter;
+
 import com.albertkingdom.shoppingwebsite.filter.CustomAuthorizationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +21,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private final UserDetailsService userDetailsService;
+    @Autowired
+    private CustomAuthorizationFilter customAuthorizationFilter;
 
     public SecurityConfig(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
@@ -30,14 +32,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean());
-        customAuthenticationFilter.setFilterProcessesUrl("/api/login");
+        //CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean());
+        //customAuthenticationFilter.setFilterProcessesUrl("/api/login");
         http.csrf().disable()
                 .cors() //allow cors option preflight from browser
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        http.authorizeRequests().antMatchers("/api/login").permitAll();
+        http.authorizeRequests().antMatchers("/api/login", "/api/refreshToken").permitAll();
         http.authorizeRequests().antMatchers("/api/register").permitAll();
         http.authorizeRequests().antMatchers(HttpMethod.POST,"/api/order/**").hasAnyAuthority("ROLE_USER"); // create order
         http.authorizeRequests().antMatchers("/api/order/**").hasAnyAuthority("ROLE_ADMIN"); //allow user logged in and with role as "role_admin"
@@ -48,8 +50,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.authorizeRequests().antMatchers(HttpMethod.PUT,"/api/products/**").hasAnyAuthority("ROLE_ADMIN");
         http.authorizeRequests().anyRequest().authenticated(); // deny all access without authenticated
 
-        http.addFilter(customAuthenticationFilter);
-        http.addFilterBefore(new CustomAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
+        //http.addFilter(customAuthenticationFilter);
+        http.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Override
