@@ -32,14 +32,14 @@ public class ShoppingWebsiteApplication {
 	PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	@Bean
-	CommandLineRunner run(UserService userService) {
-		return args -> {
-
-			//userService.saveUser(new User(null,"test6@gmail.com", "test666", "test6", new ArrayList<>()));
-
-			//userService.addRoleToUser("test6@gmail.com", "ROLE_USER");
-
-		};
-	}
+//	@Bean
+//	CommandLineRunner run(UserService userService) {
+//		return args -> {
+//
+//			//userService.saveUser(new User(null,"test6@gmail.com", "test666", "test6", new ArrayList<>()));
+//
+//			//userService.addRoleToUser("test6@gmail.com", "ROLE_USER");
+//
+//		};
+//	}
 }
