@@ -1,11 +1,9 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
-import com.albertkingdom.shoppingwebsite.model.Order;
-import com.albertkingdom.shoppingwebsite.model.OrderItem;
-import com.albertkingdom.shoppingwebsite.model.OrderRequest;
-import com.albertkingdom.shoppingwebsite.model.OrderRequestItem;
+import com.albertkingdom.shoppingwebsite.model.*;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.sevice.OrderServiceImpl;
+import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -21,8 +19,10 @@ import java.util.List;
 public class OrderController {
     @Autowired
     private OrderServiceImpl orderServiceImpl;
-@Autowired
-private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ProductServiceImpl productServiceImpl;
 
     /*
     create an order with request like
@@ -41,15 +41,18 @@ private UserRepository userRepository;
     public HttpStatus saveOrder(@RequestBody OrderRequest orderRequest, Principal principal) {
         Order newOrder = new Order();
         List<OrderRequestItem> items = orderRequest.getItems();
-        System.out.println("save order...user is.."+ principal.getName());
+
         String userEmail = principal.getName();
+        Float orderTotalPrice = 0F;
         for (OrderRequestItem i : items ) {
             System.out.println("productId: " + i.getProductId() + ",productCount: "+ i.getProductCount());
             OrderItem orderItem = new OrderItem(i.getProductId(),i.getProductCount());
             newOrder.addOrderItem(orderItem);
+
+            orderTotalPrice += productServiceImpl.getProductById(i.getProductId()).getPrice();
         }
 
-        newOrder.setPriceSum(orderRequest.getTotalPrice());
+        newOrder.setPriceSum(orderTotalPrice);
         newOrder.setUserId(userRepository.findByEmail(userEmail).getId());
 
         orderServiceImpl.saveOrder(newOrder);
@@ -57,11 +60,11 @@ private UserRepository userRepository;
         return HttpStatus.OK;
     }
 
+
     @GetMapping("{id}")
-    public Order getOrderById(@PathVariable("id") Long id) {
-        Order result = orderServiceImpl.getOrderById(id);
-        //System.out.println(result);
-        return orderServiceImpl.getOrderById(id);
+    public CustomOrderResponse getOrderDetailById(@PathVariable("id") Long id) {
+
+        return orderServiceImpl.getOrderDetailById(id);
     }
     @GetMapping()
     public List<Order> getAllOrder() {

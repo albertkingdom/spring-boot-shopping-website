@@ -16,12 +16,14 @@ public class OrderItem {
 
     @ManyToOne
     @JsonBackReference
+    @JoinColumn(name = "order_id")
     private Order order;
 
 
     private Long productId;
 
     private Integer quantity;
+
 
     public OrderItem() {
     }
