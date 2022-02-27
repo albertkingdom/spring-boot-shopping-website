@@ -12,6 +12,10 @@ public class Product {
     private Long id;
     private String name;
     private Float price;
+    private String imgUrl;
+    private String imgName;
+
+
 //    @ManyToOne
 //    private Order order;
 
@@ -28,6 +32,13 @@ public class Product {
         this.id = id;
         this.name = name;
         this.price = price;
+    }
+
+    public Product(String name, Float price, String imgUrl, String imgName) {
+        this.name = name;
+        this.price = price;
+        this.imgUrl = imgUrl;
+        this.imgName = imgName;
     }
 
     public Long getId() {
@@ -52,5 +63,21 @@ public class Product {
 
     public void setPrice(Float price) {
         this.price = price;
+    }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
+    public String getImgName() {
+        return imgName;
+    }
+
+    public void setImgName(String imgName) {
+        this.imgName = imgName;
     }
 }
