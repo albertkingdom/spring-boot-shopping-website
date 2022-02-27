@@ -59,6 +59,11 @@
 			<version>5.6.1</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http44</artifactId>
+			<version>1.30.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

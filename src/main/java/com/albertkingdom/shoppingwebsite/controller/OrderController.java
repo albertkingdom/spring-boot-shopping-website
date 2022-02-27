@@ -44,12 +44,12 @@ public class OrderController {
 
         String userEmail = principal.getName();
         Float orderTotalPrice = 0F;
-        for (OrderRequestItem i : items ) {
-            System.out.println("productId: " + i.getProductId() + ",productCount: "+ i.getProductCount());
-            OrderItem orderItem = new OrderItem(i.getProductId(),i.getProductCount());
+        for (OrderRequestItem i : items) {
+            System.out.println("productId: " + i.getProductId() + ",productCount: " + i.getProductCount());
+            OrderItem orderItem = new OrderItem(i.getProductId(), i.getProductCount());
             newOrder.addOrderItem(orderItem);
 
-            orderTotalPrice += productServiceImpl.getProductById(i.getProductId()).getPrice();
+            orderTotalPrice += productServiceImpl.getProductById(i.getProductId()).getPrice() * i.getProductCount();
         }
 
         newOrder.setPriceSum(orderTotalPrice);
@@ -66,6 +66,7 @@ public class OrderController {
 
         return orderServiceImpl.getOrderDetailById(id);
     }
+
     @GetMapping()
     public List<Order> getAllOrder() {
         List<Order> result = orderServiceImpl.getAllOrders();
