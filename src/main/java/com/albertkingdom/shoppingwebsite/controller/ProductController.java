@@ -1,14 +1,22 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
+import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.sevice.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -16,6 +24,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
+@Validated
 public class ProductController {
     private ProductServiceImpl productServiceImpl;
     @Autowired
@@ -26,7 +35,10 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> saveProduct(@RequestParam("productName") String productName, @RequestParam("productPrice") String productPrice, @RequestParam(value = "productImage", required = false) MultipartFile file) {
+    public ResponseEntity<Product> saveProduct(@RequestParam("productName") @NotBlank String productName,
+                                               @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+$", message = "Must be digits.") String productPrice,
+                                               @RequestParam(value = "productImage", required = false) MultipartFile file
+    ) {
 
         String imgUrl = null;
         String imgName = null;
@@ -47,6 +59,7 @@ public class ProductController {
         return ResponseEntity.badRequest().build();
 
     }
+
     @GetMapping
     public List<Product> getAllProducts(HttpSession session) {
         return productServiceImpl.getAllProducts();
@@ -62,7 +75,11 @@ public class ProductController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Product> updateProduct(@RequestParam("productName") String productName, @RequestParam("productPrice") String productPrice, @RequestParam(value = "productImage", required = false) MultipartFile file, @PathVariable("id") Long id) {
+    public ResponseEntity<Product> updateProduct(@RequestParam("productName") @NotBlank String productName,
+                                                 @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+$", message = "Must be digits.") String productPrice,
+                                                 @RequestParam(value = "productImage", required = false) MultipartFile file,
+                                                 @PathVariable("id") Long id
+    ) {
 
         String imgUrl = null;
         String imgName = null;

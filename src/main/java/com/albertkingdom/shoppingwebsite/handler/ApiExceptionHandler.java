@@ -10,9 +10,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -61,12 +63,20 @@ public class ApiExceptionHandler {
         return new ResponseEntity<>(ier, HttpStatus.BAD_REQUEST);
     }
 
-    /*
-    *deal with other exceptions
-    * */
-    @ExceptionHandler(Exception.class)
-    @ResponseBody
-    public ResponseEntity<?> handleException(Exception e) {
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    /** For @requestParam validation, which throw ConstraintViolationException
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
+        System.out.println("ConstraintViolationException" + e.getConstraintViolations());
+        Set<ConstraintViolation<?>> errMsgs = e.getConstraintViolations();
+
+        List<FieldResource> fieldResources = new ArrayList<>();
+        for(ConstraintViolation<?> errMsg: errMsgs){
+            FieldResource fieldResource = new FieldResource(null, errMsg.getPropertyPath().toString(), null, errMsg.getMessage());
+            fieldResources.add(fieldResource);
+        }
+        InvalidErrorResource ier = new InvalidErrorResource(e.getMessage(), fieldResources);
+        return ResponseEntity.badRequest().body(ier);
     }
+
 }
