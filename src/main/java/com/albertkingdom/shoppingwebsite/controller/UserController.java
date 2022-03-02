@@ -7,34 +7,22 @@ import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.sevice.UserServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.util.Arrays.stream;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 
 @RestController
 public class UserController {
@@ -68,16 +56,7 @@ public class UserController {
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public ResponseEntity<?> login(@RequestBody User user) throws Exception {
-        //User existingUser = userRepository.findByEmailAndPassword(user.getEmail(), user.getPassword());
-        User existingUser = userServiceImpl.getUserByEmailAndPassword(user.getEmail(), user.getPassword());
 
-//        if (existingUser != null) {
-//            session.setAttribute("user", existingUser);
-//            CustomResponse resultResponse = new CustomResponse("login success", existingUser.getName());
-//            return new ResponseEntity<>(resultResponse, HttpStatus.OK);
-//        }
-//        CustomResponse resultResponse = new CustomResponse("login failed", null);
-//        return new ResponseEntity<>(resultResponse, HttpStatus.BAD_REQUEST);
         Authentication authentication = null;
         try {
             authentication = authenticationManager.authenticate(
@@ -87,6 +66,7 @@ public class UserController {
         } catch (AuthenticationException e) {
             System.out.println("Incorrect username or password: "+ e);
 
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect username or password");
         }
         org.springframework.security.core.userdetails.User authenticatedUser = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
         String access_token = jwtUtil.generateAccessToken(authenticatedUser);

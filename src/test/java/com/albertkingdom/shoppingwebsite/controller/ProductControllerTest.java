@@ -2,6 +2,7 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
+import com.albertkingdom.shoppingwebsite.sevice.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,12 +24,13 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import javax.persistence.PostRemove;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,7 +49,8 @@ class ProductControllerTest {
     UserDetailsService userDetailsService;
     @MockBean
     JwtUtil jwtUtil;
-
+    @MockBean
+    CloudinaryService cloudinaryService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -76,37 +79,54 @@ class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    void saveProduct() throws Exception {
+    void saveProduct_shouldReturn200_whenNameAndPriceIsValid() throws Exception {
         Product product = new Product();
         product.setName("product");
         product.setPrice(888F);
         Product savedProduct = new Product(null,"product",888F);
 
 
-        Mockito.when(productServiceImpl.saveProduct(any(Product.class))).thenReturn(product);
+        // Mock the result from service
+        Mockito.when(productServiceImpl.saveProduct(any(Product.class))).thenReturn(savedProduct);
 
         String url = "/api/products/";
         String expectedJsonResponse = objectMapper.writeValueAsString(savedProduct);
+
         MvcResult mvcResult = mockMvc.perform(
-                post(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-
-                        .content(objectMapper.writeValueAsString(product))
-                        //.accept(MediaType.APPLICATION_JSON).with(csrf())
-//                        .header(HttpHeaders.AUTHORIZATION, "Bearer token")
-
+                        post(url)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .param("productName", "product")
+                                .param("productPrice", "888")
                 )
                 .andExpect(status().isOk())
-
                 .andReturn();
-
         String actualJsonResponse = mvcResult.getResponse().getContentAsString();
         System.out.println("actualJsonResponse" + actualJsonResponse);
         assertEquals(expectedJsonResponse, actualJsonResponse); //assert兩者結果相同
 
 
     }
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void saveProduct_shouldReturn400_whenNameOrPriceIsInValid() throws Exception {
 
+        String url = "/api/products/";
+
+
+        MvcResult mvcResult = mockMvc.perform(
+                        post(url)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .param("productName", "")
+                                .param("productPrice", "888")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.errors").isArray())
+                .andReturn();
+        String actualJsonResponse = mvcResult.getResponse().getContentAsString();
+        System.out.println("actualJsonResponse" + actualJsonResponse);
+
+    }
     @Test
     void getProductById() throws Exception {
         Long id = 1L; //specify an id
