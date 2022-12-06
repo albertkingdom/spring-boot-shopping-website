@@ -1,8 +1,8 @@
 ## 購物網站side project後端
-前端網站deploy link: https://inspiring-clarke-85062c.netlify.app/product_list \
+前端網站deploy link: https://reurl.cc/85DVxy \
 前端github: https://github.com/albertkingdom/react-shopping-website-for-spring-boot 
 
-*後端部署在heroku平台，因為是免費方案，第一次載入回應時間較久*
+*部署在AWS平台*
 
 ## 使用者帳密
 |  | 前台user| 後台admin |
@@ -15,7 +15,7 @@
 ### 前台
 - 註冊帳號
 - 登入
-- 購物車、下訂單 \
+- 購物車、下訂單
 ### 後台
 - 上架、下架商品、修改商品資訊
 - 檢視訂單、刪除訂單

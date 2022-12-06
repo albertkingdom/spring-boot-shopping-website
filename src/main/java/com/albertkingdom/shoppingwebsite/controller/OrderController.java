@@ -43,7 +43,7 @@ public class OrderController {
         List<OrderRequestItem> items = orderRequest.getItems();
 
         String userEmail = principal.getName();
-        Float orderTotalPrice = 0F;
+        float orderTotalPrice = 0F;
         for (OrderRequestItem i : items) {
             System.out.println("productId: " + i.getProductId() + ",productCount: " + i.getProductCount());
             OrderItem orderItem = new OrderItem(i.getProductId(), i.getProductCount());

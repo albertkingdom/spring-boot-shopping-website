@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +18,9 @@ public class Order {
     private final UUID orderId = UUID.randomUUID();
     private Float priceSum;
     private Long userId;
+    @Column(name="created_at", insertable = false)
+    private Timestamp createdAt;
+
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
@@ -47,6 +51,10 @@ public class Order {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
 
     public List<OrderItem> getOrderItems() {
