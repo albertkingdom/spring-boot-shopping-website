@@ -28,7 +28,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.userDetailsService = userDetailsService;
     }
 
-
+    private static final String[] AUTH_WHITELIST = {
+            // -- Swagger UI v2
+            "/v2/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            // -- Swagger UI v3 (OpenAPI)
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            // other public endpoints of your API may be appended to this array
+            "/api/login",
+            "/api/register",
+            "/api/refreshToken",
+            "/api/order/pay/confirm"
+    };
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
@@ -39,16 +56,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        http.authorizeRequests().antMatchers("/api/login", "/api/refreshToken").permitAll();
-        http.authorizeRequests().antMatchers("/api/register").permitAll();
-        http.authorizeRequests().antMatchers(HttpMethod.POST,"/api/order/**").hasAnyAuthority("ROLE_USER"); // create order
-        http.authorizeRequests().antMatchers("/api/order/**").hasAnyAuthority("ROLE_ADMIN"); //allow user logged in and with role as "role_admin"
+        http.authorizeRequests()
+                .antMatchers(AUTH_WHITELIST).permitAll()
+                .antMatchers(HttpMethod.GET,"/api/products/**").permitAll()
+                .antMatchers(HttpMethod.POST,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers(HttpMethod.DELETE,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers(HttpMethod.PUT,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
+                .antMatchers(HttpMethod.POST,"/api/order/**").hasAnyAuthority("ROLE_USER") // create order
+                .antMatchers("/api/order/**").hasAnyAuthority("ROLE_ADMIN")  //allow user logged in and with role as "role_admin"
+                .anyRequest().authenticated(); // deny all access without authenticated
 
-        http.authorizeRequests().antMatchers(HttpMethod.GET,"/api/products/**").permitAll();
-        http.authorizeRequests().antMatchers(HttpMethod.POST,"/api/products/**").hasAnyAuthority("ROLE_ADMIN");
-        http.authorizeRequests().antMatchers(HttpMethod.DELETE,"/api/products/**").hasAnyAuthority("ROLE_ADMIN");
-        http.authorizeRequests().antMatchers(HttpMethod.PUT,"/api/products/**").hasAnyAuthority("ROLE_ADMIN");
-        http.authorizeRequests().anyRequest().authenticated(); // deny all access without authenticated
 
         //http.addFilter(customAuthenticationFilter);
         http.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);

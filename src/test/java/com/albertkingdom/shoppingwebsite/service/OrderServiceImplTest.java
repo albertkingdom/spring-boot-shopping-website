@@ -1,4 +1,4 @@
-package com.albertkingdom.shoppingwebsite.sevice;
+package com.albertkingdom.shoppingwebsite.service;
 
 import com.albertkingdom.shoppingwebsite.model.Order;
 import com.albertkingdom.shoppingwebsite.repository.OrderRepository;

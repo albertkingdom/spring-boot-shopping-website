@@ -1,8 +1,7 @@
-package com.albertkingdom.shoppingwebsite.sevice;
+package com.albertkingdom.shoppingwebsite.service;
 
 import com.albertkingdom.shoppingwebsite.model.Role;
 import com.albertkingdom.shoppingwebsite.model.User;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 

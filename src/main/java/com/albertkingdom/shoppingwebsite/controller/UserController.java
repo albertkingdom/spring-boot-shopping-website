@@ -5,7 +5,7 @@ import com.albertkingdom.shoppingwebsite.model.AuthenticationResponse;
 import com.albertkingdom.shoppingwebsite.model.CustomResponse;
 import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import com.albertkingdom.shoppingwebsite.sevice.UserServiceImpl;
+import com.albertkingdom.shoppingwebsite.service.UserServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;

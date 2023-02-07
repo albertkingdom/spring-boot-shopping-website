@@ -1,28 +1,20 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
-import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
-import com.albertkingdom.shoppingwebsite.sevice.CloudinaryService;
-import com.albertkingdom.shoppingwebsite.sevice.ProductService;
-import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
+import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
+import com.albertkingdom.shoppingwebsite.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 @RestController

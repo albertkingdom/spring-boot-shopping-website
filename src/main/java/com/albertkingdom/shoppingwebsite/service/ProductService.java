@@ -1,8 +1,7 @@
-package com.albertkingdom.shoppingwebsite.sevice;
+package com.albertkingdom.shoppingwebsite.service;
 
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
-import org.springframework.data.domain.Page;
 
 import java.util.List;
 
