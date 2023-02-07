@@ -1,7 +1,12 @@
 package com.albertkingdom.shoppingwebsite.sevice;
 
 import com.albertkingdom.shoppingwebsite.model.Product;
+import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +29,13 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    @Override
+    public ProductsPagination getProductsByPage(int page) {
+        Pageable pageWithTenElementsDesc = PageRequest.of(page, 10, Sort.by("id").descending());
+        Page<Product> result = productRepository.findAll(pageWithTenElementsDesc);
+        return new ProductsPagination(result.getContent(), result.getTotalPages(), result.getTotalElements());
     }
 
     @Override

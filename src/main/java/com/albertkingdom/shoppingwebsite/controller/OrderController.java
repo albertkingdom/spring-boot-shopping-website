@@ -5,11 +5,14 @@ import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.sevice.OrderServiceImpl;
 import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -59,19 +62,21 @@ public class OrderController {
 
         return HttpStatus.OK;
     }
-
-
     @GetMapping("{id}")
     public CustomOrderResponse getOrderDetailById(@PathVariable("id") Long id) {
 
         return orderServiceImpl.getOrderDetailById(id);
     }
 
+//    @GetMapping()
+//    public List<Order> getAllOrder() {
+//        List<Order> result = orderServiceImpl.getAllOrders();
+//        //System.out.println(result);
+//        return result;
+//    }
     @GetMapping()
-    public List<Order> getAllOrder() {
-        List<Order> result = orderServiceImpl.getAllOrders();
-        //System.out.println(result);
-        return result;
+    public OrdersPagination getOrdersByPage(@RequestParam(name = "page") int page ) {
+        return orderServiceImpl.getOrdersByPage(page);
     }
 
     @DeleteMapping("{id}")

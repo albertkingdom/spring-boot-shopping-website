@@ -2,9 +2,12 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.model.Product;
+import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.sevice.CloudinaryService;
+import com.albertkingdom.shoppingwebsite.sevice.ProductService;
 import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -26,13 +29,12 @@ import java.util.Map;
 @RequestMapping("/api/products")
 @Validated
 public class ProductController {
-    private ProductServiceImpl productServiceImpl;
+    @Autowired
+    private ProductService productService;
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    public ProductController(ProductServiceImpl productServiceImpl) {
-        this.productServiceImpl = productServiceImpl;
-    }
+
 
     @PostMapping
     public ResponseEntity<Product> saveProduct(@RequestParam("productName") @NotBlank String productName,
@@ -49,7 +51,7 @@ public class ProductController {
                 imgUrl = uploadResult.get("url").toString();
                 imgName = uploadResult.get("public_id").toString();
             }
-            Product newProduct = productServiceImpl.saveProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName));
+            Product newProduct = productService.saveProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName));
 
             return ResponseEntity.ok().body(newProduct);
         } catch (IOException e) {
@@ -60,15 +62,19 @@ public class ProductController {
 
     }
 
-    @GetMapping
-    public List<Product> getAllProducts(HttpSession session) {
-        return productServiceImpl.getAllProducts();
-    }
+//    @GetMapping
+//    public List<Product> getAllProducts(HttpSession session) {
+//        return productService.getAllProducts();
+//    }
 
+    @GetMapping
+    public ProductsPagination getProductsByPage(@RequestParam(name = "page") int page) {
+        return productService.getProductsByPage(page);
+    }
     // http://localhost:8080/api/products/1
     @GetMapping("{id}")
     public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) {
-        Product product = productServiceImpl.getProductById(id);
+        Product product = productService.getProductById(id);
         //System.out.println("get by id" + product);
 
         return new ResponseEntity<Product>(product, HttpStatus.OK);
@@ -90,7 +96,7 @@ public class ProductController {
                 imgUrl = uploadResult.get("url").toString();
                 imgName = uploadResult.get("public_id").toString();
             }
-            Product updatedProduct = productServiceImpl.updateProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName), id);
+            Product updatedProduct = productService.updateProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName), id);
 
             return ResponseEntity.ok().body(updatedProduct);
         } catch (IOException e) {
@@ -102,10 +108,10 @@ public class ProductController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id) throws IOException {
-        Product existedProduct = productServiceImpl.getProductById(id);
-        String publicId = existedProduct.getImgName();
-        productServiceImpl.deleteProduct(id);
-        cloudinaryService.deleteFile(publicId);
+        Product existedProduct = productService.getProductById(id);
+        String imgName = existedProduct.getImgName();
+        productService.deleteProduct(id);
+        cloudinaryService.deleteFile(imgName);
         return new ResponseEntity<String>("Product deleted successfully", HttpStatus.OK);
     }
 }

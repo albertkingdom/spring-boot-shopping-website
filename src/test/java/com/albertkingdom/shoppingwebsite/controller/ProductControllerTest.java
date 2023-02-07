@@ -1,11 +1,14 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.model.Product;
+import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import com.albertkingdom.shoppingwebsite.sevice.CloudinaryService;
+import com.albertkingdom.shoppingwebsite.sevice.ProductService;
 import com.albertkingdom.shoppingwebsite.sevice.ProductServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultHandler;
 
 import javax.persistence.PostRemove;
 import java.util.ArrayList;
@@ -36,11 +40,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 @WebMvcTest(ProductController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ProductControllerTest {
     @MockBean
-    ProductServiceImpl productServiceImpl;
+    ProductService productService;
     @MockBean
     private ProductRepository productRepository;
     @Autowired
@@ -55,27 +60,30 @@ class ProductControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
+
     @Test
-    void getAllProducts() throws Exception {
+    void getProductsByPage() throws Exception {
         List<Product> listProducts = new ArrayList<>();
         listProducts.add(new Product("product1",999F));
         listProducts.add(new Product("product2",999F));
         listProducts.add(new Product("product3",999F));
 
-        Mockito.when(productServiceImpl.getAllProducts()).thenReturn(listProducts); //模擬controller method會調用到的service方法回傳值
+        ProductsPagination result = new ProductsPagination(listProducts, 1, 3L);
+        Mockito.when(productService.getProductsByPage(0)).thenReturn(result); //模擬controller method會調用到的service方法回傳值
 
-        String url = "/api/products";
+        String url = "/api/products?page=0";
 
-        MvcResult mvcResult = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn(); //模擬get request
+        MvcResult mvcResult = mockMvc.perform(get(url))
+                .andExpect(status().isOk())
+                .andReturn(); //模擬get request
 
         String actualJsonResponse = mvcResult.getResponse().getContentAsString(); //模擬get request請求的response
-        System.out.println(actualJsonResponse);
+        log.info(actualJsonResponse);
 
-        String expectedJsonResponse = objectMapper.writeValueAsString(listProducts);
+        String expectedJsonResponse = objectMapper.writeValueAsString(result);
 
         assertEquals(expectedJsonResponse, actualJsonResponse); //assert兩者結果相同
     }
-
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -87,7 +95,7 @@ class ProductControllerTest {
 
 
         // Mock the result from service
-        Mockito.when(productServiceImpl.saveProduct(any(Product.class))).thenReturn(savedProduct);
+        Mockito.when(productService.saveProduct(any(Product.class))).thenReturn(savedProduct);
 
         String url = "/api/products/";
         String expectedJsonResponse = objectMapper.writeValueAsString(savedProduct);
@@ -132,7 +140,7 @@ class ProductControllerTest {
         Long id = 1L; //specify an id
         Product product = new Product();
         product.setId(id);
-        Mockito.when(productServiceImpl.getProductById(id)).thenReturn(product);
+        Mockito.when(productService.getProductById(id)).thenReturn(product);
 
         // get()的第2個參數是path variable值，可以有多個值
         MvcResult mvcResult = mockMvc.perform(get("/api/products/{id}",id)).andExpect(status().isOk()).andReturn(); // real response
@@ -149,18 +157,19 @@ class ProductControllerTest {
         Long id = 1L;
         Product product = new Product(1L,"product",888F);
 
-        Mockito.when(productServiceImpl.updateProduct(any(Product.class), eq(id))).thenReturn(product);
+        Mockito.when(productService.updateProduct(any(Product.class), eq(id))).thenReturn(product);
 
         try {
             MvcResult mvcResult = mockMvc.perform(
                     put("/api/products/{id}", id)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(product))
-            ).andExpect(status().isOk()).andReturn();
+                            .contentType(MediaType.MULTIPART_FORM_DATA)
+                            .param("productName", "product")
+                            .param("productPrice", "888")
+
+            ).andReturn();
+            assertEquals(200,mvcResult.getResponse().getStatus());
             String expectedJsonResponse = objectMapper.writeValueAsString(product); //transform expected product object to string
-
             String actualJsonResponse = mvcResult.getResponse().getContentAsString();
-
             assertEquals(expectedJsonResponse, actualJsonResponse);
         } catch (Exception e) {
             System.out.println(e);
@@ -172,10 +181,13 @@ class ProductControllerTest {
     @Test
     void deleteProduct() throws Exception {
         Long id = 1L;
-        Mockito.doNothing().when(productServiceImpl).deleteProduct(id);
+        Product testProduct = new Product("test",888F,"url", "imgName");
+        Mockito.doNothing().when(productService).deleteProduct(id);
+
+        Mockito.when(productService.getProductById(id)).thenReturn(testProduct);
 
         mockMvc.perform(delete("/api/products/{id}", id)).andExpect(status().isOk());
         //productServiceImpl.deleteProduct is called 1 time
-        Mockito.verify(productServiceImpl, Mockito.times(1)).deleteProduct(id);
+        Mockito.verify(productService, Mockito.times(1)).deleteProduct(id);
     }
 }
