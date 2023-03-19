@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    image: mysql:5.7
+    environment:
+#      - MYSQL_USER=root
+      - MYSQL_ROOT_PASSWORD=myrootpassword
+      - MYSQL_DATABASE=shopping-website-db
+
+    hostname: mysqldb
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - db:/var/lib/mysql
+  spring:
+    depends_on:
+      - mysqldb
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/shopping-website-db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=myrootpassword
+
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: web_phpmyadmin
+    restart: always
+    ports:
+      - 8888:80
+    environment:
+      - PMA_HOST=mysqldb
+
+volumes:
+  db:
