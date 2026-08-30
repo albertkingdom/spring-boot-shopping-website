@@ -64,6 +64,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.PUT,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
                 .antMatchers(HttpMethod.POST,"/api/order/**").hasAnyAuthority("ROLE_USER") // create order
                 .antMatchers("/api/order/**").hasAnyAuthority("ROLE_ADMIN")  //allow user logged in and with role as "role_admin"
+                .antMatchers("/api/user/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated(); // deny all access without authenticated
 
 

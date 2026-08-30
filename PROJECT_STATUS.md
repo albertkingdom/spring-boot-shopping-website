@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-08-30（PR #5 合併後）
+最後更新：2026-08-30（PR #6 合併後）
 
 ## Current Baseline
 
@@ -26,6 +26,8 @@
 - [x] 本機 `master` 已同步並改為追蹤 GitHub `origin/master`。
 - [x] 已合併的工作分支已從本機與 GitHub 刪除。
 - [x] [PR #5](https://github.com/albertkingdom/spring-boot-shopping-website/pull/5)：將 `JwtUtil` 的硬編碼 JWT secret 改由 `JWT_SECRET` 環境變數注入，並在啟動時驗證長度。
+- [x] [PR #6](https://github.com/albertkingdom/spring-boot-shopping-website/pull/6)：加入專案交接文件（`PROJECT_STATUS.md`、`docs/jwt-basics.md`）並擴充 `ARCHITECTURE_TODO.md` P2 整合測試待辦。
+- [x] [PR #7](https://github.com/albertkingdom/spring-boot-shopping-website/pull/7)：`SecurityConfig` 加入 `/api/user/**` 需要 `ROLE_ADMIN` 的規則，並補上 `UserControllerSecurityTest` 驗證匿名／一般使用者／管理員三種情境。
 
 ## Next Actions
 
