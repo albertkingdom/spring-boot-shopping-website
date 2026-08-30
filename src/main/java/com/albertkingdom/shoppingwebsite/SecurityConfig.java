@@ -48,9 +48,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     };
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-
-        //CustomAuthenticationFilter customAuthenticationFilter = new CustomAuthenticationFilter(authenticationManagerBean());
-        //customAuthenticationFilter.setFilterProcessesUrl("/api/login");
         http.csrf().disable()
                 .cors() //allow cors option preflight from browser
                 .and()
@@ -68,7 +65,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated(); // deny all access without authenticated
 
 
-        //http.addFilter(customAuthenticationFilter);
         http.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
     }
 

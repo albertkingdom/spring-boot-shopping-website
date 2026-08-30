@@ -98,7 +98,7 @@ class ProductControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         String actualJsonResponse = mvcResult.getResponse().getContentAsString();
-        System.out.println("actualJsonResponse" + actualJsonResponse);
+        log.info("actualJsonResponse{}", actualJsonResponse);
         assertEquals(expectedJsonResponse, actualJsonResponse); //assert兩者結果相同
 
 
@@ -121,7 +121,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.errors").isArray())
                 .andReturn();
         String actualJsonResponse = mvcResult.getResponse().getContentAsString();
-        System.out.println("actualJsonResponse" + actualJsonResponse);
+        log.info("actualJsonResponse{}", actualJsonResponse);
 
     }
     @Test
@@ -161,7 +161,7 @@ class ProductControllerTest {
             String actualJsonResponse = mvcResult.getResponse().getContentAsString();
             assertEquals(expectedJsonResponse, actualJsonResponse);
         } catch (Exception e) {
-            System.out.println(e);
+            log.error("updateProduct threw", e);
         }
 
 

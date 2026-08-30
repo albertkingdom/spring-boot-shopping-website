@@ -4,6 +4,8 @@ import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.service.ProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequestMapping("/api/products")
 @Validated
 public class ProductController {
+    private static final Logger log = LoggerFactory.getLogger(ProductController.class);
+
     @Autowired
     private ProductService productService;
     @Autowired
@@ -47,17 +51,12 @@ public class ProductController {
 
             return ResponseEntity.ok().body(newProduct);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("failed to save product name={}", productName, e);
         }
 
         return ResponseEntity.badRequest().build();
 
     }
-
-//    @GetMapping
-//    public List<Product> getAllProducts(HttpSession session) {
-//        return productService.getAllProducts();
-//    }
 
     @GetMapping
     public ProductsPagination getProductsByPage(@RequestParam(name = "page") int page) {
@@ -67,8 +66,6 @@ public class ProductController {
     @GetMapping("{id}")
     public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) {
         Product product = productService.getProductById(id);
-        //System.out.println("get by id" + product);
-
         return new ResponseEntity<Product>(product, HttpStatus.OK);
     }
 
@@ -92,7 +89,7 @@ public class ProductController {
 
             return ResponseEntity.ok().body(updatedProduct);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("failed to update product id={}", id, e);
         }
 
         return ResponseEntity.badRequest().build();

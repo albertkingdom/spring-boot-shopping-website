@@ -3,6 +3,8 @@ package com.albertkingdom.shoppingwebsite.handler;
 import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.resource.FieldResource;
 import com.albertkingdom.shoppingwebsite.resource.InvalidErrorResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
@@ -18,6 +20,7 @@ import java.util.Set;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     /**
      *  deal with invalid request parameters
@@ -67,7 +70,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
-        System.out.println("ConstraintViolationException" + e.getConstraintViolations());
+        log.debug("constraint violation count={}", e.getConstraintViolations().size());
         Set<ConstraintViolation<?>> errMsgs = e.getConstraintViolations();
 
         List<FieldResource> fieldResources = new ArrayList<>();
