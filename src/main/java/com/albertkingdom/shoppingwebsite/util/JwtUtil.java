@@ -5,18 +5,35 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.stream.Collectors;
 
 @Service
 public class JwtUtil {
 
-    private final String SECRET_KEY = "secret";
-    Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY.getBytes());
+    private static final int MIN_SECRET_BYTES = 32;
+
+    private final Algorithm algorithm;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        if (secret == null || secret.isEmpty()) {
+            throw new IllegalStateException(
+                    "jwt.secret must be configured (set the JWT_SECRET environment variable).");
+        }
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException(
+                    "jwt.secret must be at least " + MIN_SECRET_BYTES + " bytes long.");
+        }
+        this.algorithm = Algorithm.HMAC256(secretBytes);
+    }
+
     public String generateAccessToken(User authenticatedUser) {
 
         String access_token = JWT.create().withSubject(authenticatedUser.getUsername())
