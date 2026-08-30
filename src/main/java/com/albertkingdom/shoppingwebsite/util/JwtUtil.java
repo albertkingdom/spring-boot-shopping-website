@@ -51,11 +51,8 @@ public class JwtUtil {
     }
 
     public DecodedJWT decodeJWT(String token) {
-
         JWTVerifier verifier = JWT.require(algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(token);
-        System.out.println("decodedJWT: "+ decodedJWT);
-        return decodedJWT;
+        return verifier.verify(token);
     }
 
     public String regenerateAccessToken(com.albertkingdom.shoppingwebsite.model.User user) {

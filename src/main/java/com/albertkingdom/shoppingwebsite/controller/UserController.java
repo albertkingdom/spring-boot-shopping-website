@@ -8,6 +8,8 @@ import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.service.UserServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @RestController
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -62,10 +65,8 @@ public class UserController {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
             );
-            System.out.println("authentication:"+ authentication);
         } catch (AuthenticationException e) {
-            System.out.println("Incorrect username or password: "+ e);
-
+            log.debug("login failed for email={}", user.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect username or password");
         }
         org.springframework.security.core.userdetails.User authenticatedUser = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
@@ -109,11 +110,9 @@ public class UserController {
 
 
             } catch (Exception exception) {
-                System.out.println("Error logging in: " + exception.getMessage());
-
+                log.warn("refresh token validation failed", exception);
                 Map<String, String> error = new HashMap<>();
                 error.put("error_message", exception.getMessage());
-
                 return ResponseEntity.status(403).body(error);
             }
         } else {

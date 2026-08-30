@@ -10,7 +10,7 @@
 - [ ] 建立 `UserResponse` DTO，禁止 API 回傳 `User` Entity 與 password hash。
 - [x] 將 `/api/user/all` 限制為 `ROLE_ADMIN`，並確認一般登入者無法取得使用者清單。
 - [ ] 依開發、測試與正式環境限制 CORS allowed origins，移除萬用來源 `*`。
-- [ ] 移除可能洩漏 JWT、登入資訊、使用者資料或第三方回應的 `System.out.println`。
+- [x] 移除可能洩漏 JWT、登入資訊、使用者資料或第三方回應的 `System.out.println`。
 
 ### 驗收條件
 
@@ -103,7 +103,7 @@
 - [ ] 加入 issuer、audience 與必要的 JWT claim 驗證。
 - [ ] 評估 refresh token rotation、撤銷與登出策略。
 - [ ] 不將內部 JWT 驗證例外訊息直接回傳給客戶端。
-- [ ] 移除未使用的 `CustomAuthenticationFilter` 與舊 Session Interceptor。
+- [x] 移除未使用的 `CustomAuthenticationFilter` 與舊 Session Interceptor。
 - [ ] 升級時將 `WebSecurityConfigurerAdapter` 改為 `SecurityFilterChain` 設定方式。
 - [ ] 為未登入、一般使用者與管理員建立完整的 endpoint authorization 測試。
 

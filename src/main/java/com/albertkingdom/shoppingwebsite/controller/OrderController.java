@@ -48,7 +48,6 @@ public class OrderController {
         String userEmail = principal.getName();
         float orderTotalPrice = 0F;
         for (OrderRequestItem i : items) {
-            System.out.println("productId: " + i.getProductId() + ",productCount: " + i.getProductCount());
             OrderItem orderItem = new OrderItem(i.getProductId(), i.getProductCount());
             newOrder.addOrderItem(orderItem);
 
@@ -68,12 +67,6 @@ public class OrderController {
         return orderServiceImpl.getOrderDetailById(id);
     }
 
-//    @GetMapping()
-//    public List<Order> getAllOrder() {
-//        List<Order> result = orderServiceImpl.getAllOrders();
-//        //System.out.println(result);
-//        return result;
-//    }
     @GetMapping()
     public OrdersPagination getOrdersByPage(@RequestParam(name = "page") int page ) {
         return orderServiceImpl.getOrdersByPage(page);
