@@ -43,6 +43,7 @@ jobs:
       CLOUDINARY_CLOUD_NAME: ci-placeholder
       CLOUDINARY_API_KEY: ci-placeholder
       CLOUDINARY_API_SECRET: ci-placeholder
+      JWT_SECRET: ci-jwt-secret-placeholder-at-least-32-bytes
 
     steps:
       - name: Check out repository
