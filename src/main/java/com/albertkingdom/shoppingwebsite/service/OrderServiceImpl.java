@@ -42,15 +42,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order getOrderById(Long id) {
-        return orderRepository.findById(id).orElseThrow();
+        return orderRepository.findById(id).orElseThrow(RuntimeException::new);
     }
 
     @Override
     public CustomOrderResponse getOrderDetailById(Long id) {
-        Order result = orderRepository.findById(id).orElseThrow();
+        Order result = orderRepository.findById(id).orElseThrow(RuntimeException::new);
 
         List<OrderItemDetail> orderItemDetailList = result.getOrderItems().stream().map(item -> {
-            Product product = productRepository.findById(item.getProductId()).orElseThrow();
+            Product product = productRepository.findById(item.getProductId()).orElseThrow(RuntimeException::new);
             return new OrderItemDetail(product.getName(), product.getPrice(), item.getQuantity());
 
         }).collect(Collectors.toList());
@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
                 result.getId(),
                 result.getPriceSum(),
                 result.getUserId(),
-                userRepository.findById(result.getUserId()).orElseThrow().getEmail(),
+                userRepository.findById(result.getUserId()).orElseThrow(RuntimeException::new).getEmail(),
                 orderItemDetailList
         );
 
@@ -68,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void deleteOrder(Long id) {
-        orderRepository.findById(id).orElseThrow();
+        orderRepository.findById(id).orElseThrow(RuntimeException::new);
         orderRepository.deleteById(id);
     }
 }

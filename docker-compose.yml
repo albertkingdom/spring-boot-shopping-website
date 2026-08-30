@@ -1,19 +1,16 @@
-version: '3.8'
-
 services:
   mysqldb:
-    image: mysql:5.7
+    image: mysql:8.0
     environment:
-#      - MYSQL_USER=root
-      - MYSQL_ROOT_PASSWORD=myrootpassword
-      - MYSQL_DATABASE=shopping-website-db
-
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
     hostname: mysqldb
     restart: always
     ports:
       - 3306:3306
     volumes:
       - db:/var/lib/mysql
+
   spring:
     depends_on:
       - mysqldb
@@ -22,19 +19,27 @@ services:
     ports:
       - 8080:8080
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/shopping-website-db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=myrootpassword
-
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/${MYSQL_DATABASE}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
 
   phpmyadmin:
-    image: phpmyadmin
+    image: phpmyadmin:latest
     container_name: web_phpmyadmin
     restart: always
     ports:
-      - 8888:80
+      - 8888:8888
     environment:
       - PMA_HOST=mysqldb
+      - APACHE_PORT=8888
+
+  frontend:
+    image: albertkingdomdevelop/frontend-v2
+    ports:
+      - 80:80
 
 volumes:
   db:
