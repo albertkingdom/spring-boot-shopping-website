@@ -117,10 +117,12 @@
 
 ## P2：測試與品質
 
+- [ ] 建立 Testcontainers MySQL 測試骨架，供 Repository 與 Security 整合測試共用；同時將既有 `@SpringBootTest` 的 `contextLoads` 改用同一個 MySQL container，讓本地 `./mvnw verify` 無需手動啟動 MySQL。
+- [ ] 以 Testcontainers 補 Repository 整合測試，涵蓋 `UserRepository`、`ProductRepository`、`OrderRepository`、`OrderItemRepository` 的 JPA mapping 與關鍵查詢（含分頁與 N+1 驗證）。
+- [ ] 以 Testcontainers 補 Security 整合測試（不使用 `addFilters = false`），驗證未登入回 `401`、`ROLE_USER` 與 `ROLE_ADMIN` 授權邊界、JWT 過期與 refresh token 不得替代 access token。
 - [ ] 補上 UserService 註冊、密碼加密與角色指派測試。
 - [ ] 補上登入、JWT refresh、過期 token、錯誤角色與越權存取測試。
 - [ ] 補上建立訂單、交易回滾、商品不存在及非法數量測試。
-- [ ] 補上 Repository integration tests，必要時使用 Testcontainers MySQL。
 - [ ] Mock Cloudinary，測試上傳、更新與刪除失敗的處理。
 - [ ] 將 CI 中的 `echo "run-tests"` 改成真正執行 Maven tests。
 
