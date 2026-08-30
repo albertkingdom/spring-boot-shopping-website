@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-08-30（PR #8 合併後）
+最後更新：2026-08-30（PR #9 合併後）
 
 ## Current Baseline
 
@@ -29,6 +29,7 @@
 - [x] [PR #6](https://github.com/albertkingdom/spring-boot-shopping-website/pull/6)：加入專案交接文件（`PROJECT_STATUS.md`、`docs/jwt-basics.md`）並擴充 `ARCHITECTURE_TODO.md` P2 整合測試待辦。
 - [x] [PR #7](https://github.com/albertkingdom/spring-boot-shopping-website/pull/7)：`SecurityConfig` 加入 `/api/user/**` 需要 `ROLE_ADMIN` 的規則，並補上 `UserControllerSecurityTest` 驗證匿名／一般使用者／管理員三種情境。
 - [x] [PR #8](https://github.com/albertkingdom/spring-boot-shopping-website/pull/8)：將全部 `System.out.println` 與 `printStackTrace` 改為 SLF4J logger，並刪除未使用的 `CustomAuthenticationFilter`、`LoginInterceptor`、`TestInterceptor`、`WebConfig` 與其他註解掉的舊程式碼。
+- [x] [PR #9](https://github.com/albertkingdom/spring-boot-shopping-website/pull/9)：新增 `UserResponse` DTO，`/api/user/all` 不再回傳 `User` entity 或 password hash，並補測試驗證 response 不含 `password` 欄位。
 
 ## Next Actions
 
