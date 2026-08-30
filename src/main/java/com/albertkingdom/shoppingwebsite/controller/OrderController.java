@@ -2,7 +2,6 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.model.*;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import com.albertkingdom.shoppingwebsite.service.HmacSignature;
 import com.albertkingdom.shoppingwebsite.service.OrderServiceImpl;
 import com.albertkingdom.shoppingwebsite.service.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
