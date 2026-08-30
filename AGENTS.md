@@ -94,7 +94,7 @@
   - `test/<short-topic>`
   - `docs/<short-topic>`
   - `chore/<short-topic>`
-- Codex 建立的分支使用 `codex/<type>-<short-topic>`。
+- 分支名稱只能描述工作類型與主題，不得包含任何 AI 工具、模型、agent、生成工具或自動化作者名稱。
 - 緊急修正仍從 `master` 建立 `fix/<short-topic>`，完成後直接透過 PR 合回 `master`。
 
 ### Commits
