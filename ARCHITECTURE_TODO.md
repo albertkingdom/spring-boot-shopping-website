@@ -9,7 +9,7 @@
 - [x] 移除 `JwtUtil` 中硬編碼的 JWT secret，改用環境設定並確保正式環境使用足夠強度的密鑰。
 - [x] 建立 `UserResponse` DTO，禁止 API 回傳 `User` Entity 與 password hash。
 - [x] 將 `/api/user/all` 限制為 `ROLE_ADMIN`，並確認一般登入者無法取得使用者清單。
-- [ ] 依開發、測試與正式環境限制 CORS allowed origins，移除萬用來源 `*`。
+- [x] 依開發、測試與正式環境限制 CORS allowed origins，移除萬用來源 `*`。
 - [x] 移除可能洩漏 JWT、登入資訊、使用者資料或第三方回應的 `System.out.println`。
 
 ### 驗收條件
