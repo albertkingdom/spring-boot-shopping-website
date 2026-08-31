@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-08-30（PR #9 合併後）
+最後更新：2026-08-31（PR #10 合併後）
 
 ## Current Baseline
 
@@ -30,15 +30,16 @@
 - [x] [PR #7](https://github.com/albertkingdom/spring-boot-shopping-website/pull/7)：`SecurityConfig` 加入 `/api/user/**` 需要 `ROLE_ADMIN` 的規則，並補上 `UserControllerSecurityTest` 驗證匿名／一般使用者／管理員三種情境。
 - [x] [PR #8](https://github.com/albertkingdom/spring-boot-shopping-website/pull/8)：將全部 `System.out.println` 與 `printStackTrace` 改為 SLF4J logger，並刪除未使用的 `CustomAuthenticationFilter`、`LoginInterceptor`、`TestInterceptor`、`WebConfig` 與其他註解掉的舊程式碼。
 - [x] [PR #9](https://github.com/albertkingdom/spring-boot-shopping-website/pull/9)：新增 `UserResponse` DTO，`/api/user/all` 不再回傳 `User` entity 或 password hash，並補測試驗證 response 不含 `password` 欄位。
+- [x] PR #3：Bump `actions/setup-java` 4.9.1 → 6.0.0（Dependabot）。
+- [x] PR #4：Bump `actions/checkout` 6.1.0 → 7.0.1（Dependabot）。
+- [x] [PR #10](https://github.com/albertkingdom/spring-boot-shopping-website/pull/10)：CORS 移除萬用 `*`，改為 `app.cors.allowed-origins` env 驅動白名單，預設允許 `http://localhost:3000`，並補上 preflight 測試。
 
 ## Next Actions
 
 請由上而下處理，完成後同步更新核選框與「最後更新」日期。
 
 - [ ] 輪替所有曾提交到 Git 歷史的 MySQL 與 Cloudinary 憑證；只在本機 `.env` 或部署平台 secrets 更新，不得寫入 repository。
-- [ ] 審查並處理 [PR #3：setup-java 4.9.1 → 6.0.0](https://github.com/albertkingdom/spring-boot-shopping-website/pull/3)，合併後等待 `master` CI 通過。
-- [ ] 在 PR #3 完成後重新確認並處理 [PR #4：checkout 6.1.0 → 7.0.1](https://github.com/albertkingdom/spring-boot-shopping-website/pull/4)，再等待 `master` CI 通過。
-- [ ] 重新登入 GitHub CLI：`gh auth login -h github.com`，之後以 `gh auth status` 驗證。
+- [ ] 部署選定後，設定各環境 `APP_CORS_ALLOWED_ORIGINS`（staging / prod 各自的前端域名）。
 - [ ] 決定是否使用 `git filter-repo` 重寫歷史以清除舊密鑰；執行前必須先確認輪替完成、備份與協作者重新 clone 計畫。
 - [ ] GitHub 流程穩定後，決定是否移除 `.gitlab-ci.yml` 與 GitLab remote。
 - [ ] 選擇部署方案後，再設計 CD workflow；目前 CI 不負責部署。
