@@ -194,6 +194,46 @@ DB 上有比目前程式碼**更新版**的 migration（例：DB 是 V5，程式
 
 Column 型別跟 entity 不符。例：entity 用 `BigDecimal`，SQL 建 `FLOAT`。修 migration。
 
+## Seed data
+
+`V4__seed_roles.sql` inserts the two roles the application code references:
+
+```sql
+INSERT IGNORE INTO roles (name) VALUES ('ROLE_USER');
+INSERT IGNORE INTO roles (name) VALUES ('ROLE_ADMIN');
+```
+
+`INSERT IGNORE` keeps it safe against databases that were manually seeded with the same names before Flyway was introduced. `UserService.register` looks up `ROLE_USER` by name (not id), so the actual id doesn't matter.
+
+The two seed rows are the only seed the application must have to boot. Everything else (products, admin accounts) is bootstrapped separately.
+
+## Admin bootstrap
+
+Roles are seeded, but no admin *user* is auto-created. Admins are created out-of-band, per environment.
+
+### Local / dev
+
+```bash
+# 1. Compute a bcrypt hash for the desired password:
+htpasswd -bnBC 12 "" 'YourStrongLocalPassword!' | tr -d ':\n' | sed 's/$2y/$2a/'
+# → prints something like $2a$12$...
+
+# 2. Insert into MySQL:
+mysql -h 127.0.0.1 -u root -p shopping <<SQL
+INSERT INTO users (email, password, name) VALUES ('admin@example.com', '$2a$12$...', 'Local Admin');
+INSERT INTO users_roles (users_id, roles_id)
+    SELECT u.id, r.id FROM users u JOIN roles r ON r.name='ROLE_ADMIN' WHERE u.email='admin@example.com';
+SQL
+```
+
+### Staging / prod
+
+Prefer one of:
+- **Cloud provider secrets + one-off admin CLI**: a small `main` class inside the app (behind a build flag or run mode) that reads `ADMIN_EMAIL` and `ADMIN_PASSWORD` from env, hashes with the same `BCryptPasswordEncoder`, and INSERTs via `UserService.register` + `addRoleToUser`. Run once from the deploy job, then leave the env vars unset.
+- **Manual SQL through the platform's DB console** using the same INSERT pattern above.
+
+**Never** commit an admin password (plain or hashed) or wire it into a Flyway migration. Migrations are source-controlled and identical across environments — a seed-in-migration admin means every environment shares the same credential and it lives in Git forever.
+
 ## 參考
 
 - [Flyway docs — Command line](https://documentation.red-gate.com/fd/command-line-184127407.html)

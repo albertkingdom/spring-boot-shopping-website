@@ -1,18 +1,23 @@
 package com.albertkingdom.shoppingwebsite.handler;
 
+import com.albertkingdom.shoppingwebsite.exception.ConflictException;
 import com.albertkingdom.shoppingwebsite.resource.FieldResource;
 import com.albertkingdom.shoppingwebsite.resource.InvalidErrorResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestControllerAdvice
@@ -49,6 +54,18 @@ public class ApiExceptionHandler {
         }
         InvalidErrorResource ier = new InvalidErrorResource("Invalid parameter", fieldResources);
         return ResponseEntity.badRequest().body(ier);
+    }
+
+    /**
+     * Uniqueness / state conflicts (e.g. duplicate email on register).
+     * Returns 409 with a small JSON envelope so clients can distinguish
+     * client-recoverable conflicts from generic 500s.
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> handleConflict(ConflictException e) {
+        log.debug("conflict: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Collections.singletonMap("message", e.getMessage()));
     }
 
     /**
