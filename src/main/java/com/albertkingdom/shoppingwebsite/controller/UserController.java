@@ -91,7 +91,7 @@ public class UserController {
             try {
                 String refreshToken = authorizationHeader.substring("Bearer ".length());
 
-                DecodedJWT decodedJWT = jwtUtil.decodeJWT(refreshToken);
+                DecodedJWT decodedJWT = jwtUtil.verify(refreshToken, JwtUtil.TokenType.REFRESH);
                 String username = decodedJWT.getSubject(); // user email
 
                 User user = userService.getUser(username);
@@ -102,7 +102,7 @@ public class UserController {
             } catch (Exception exception) {
                 log.warn("refresh token validation failed", exception);
                 Map<String, String> error = new HashMap<>();
-                error.put("error_message", exception.getMessage());
+                error.put("error_message", "invalid refresh token");
                 return ResponseEntity.status(403).body(error);
             }
         } else {
