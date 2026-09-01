@@ -7,7 +7,6 @@ import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.service.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -27,10 +26,13 @@ import java.util.Map;
 public class ProductController {
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
-    @Autowired
-    private ProductService productService;
-    @Autowired
-    private CloudinaryService cloudinaryService;
+    private final ProductService productService;
+    private final CloudinaryService cloudinaryService;
+
+    public ProductController(ProductService productService, CloudinaryService cloudinaryService) {
+        this.productService = productService;
+        this.cloudinaryService = cloudinaryService;
+    }
 
     @PostMapping
     public ResponseEntity<ProductResponse> saveProduct(@RequestParam("productName") @NotBlank String productName,

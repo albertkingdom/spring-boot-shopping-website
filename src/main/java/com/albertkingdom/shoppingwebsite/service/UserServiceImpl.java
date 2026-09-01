@@ -5,7 +5,6 @@ import com.albertkingdom.shoppingwebsite.model.Role;
 import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.RoleRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,14 +19,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
 
-    private BCryptPasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserServiceImpl() {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 

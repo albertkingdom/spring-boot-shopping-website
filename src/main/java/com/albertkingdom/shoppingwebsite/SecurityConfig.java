@@ -2,13 +2,11 @@ package com.albertkingdom.shoppingwebsite;
 
 
 import com.albertkingdom.shoppingwebsite.filter.CustomAuthorizationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,13 +17,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    @Autowired
     private final UserDetailsService userDetailsService;
-    @Autowired
-    private CustomAuthorizationFilter customAuthorizationFilter;
+    private final CustomAuthorizationFilter customAuthorizationFilter;
 
-    public SecurityConfig(UserDetailsService userDetailsService) {
+    public SecurityConfig(UserDetailsService userDetailsService,
+                          CustomAuthorizationFilter customAuthorizationFilter) {
         this.userDetailsService = userDetailsService;
+        this.customAuthorizationFilter = customAuthorizationFilter;
     }
 
     private static final String[] AUTH_WHITELIST = {

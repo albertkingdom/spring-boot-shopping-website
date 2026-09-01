@@ -1,33 +1,26 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
-import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderItemRequest;
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
-import com.albertkingdom.shoppingwebsite.model.*;
-import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import com.albertkingdom.shoppingwebsite.service.OrderServiceImpl;
-import com.albertkingdom.shoppingwebsite.service.ProductServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import com.albertkingdom.shoppingwebsite.service.OrderService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.List;
-
 
 @RestController
 @RequestMapping(path = "/api/order")
 public class OrderController {
-    @Autowired
-    private OrderServiceImpl orderServiceImpl;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private ProductServiceImpl productServiceImpl;
+
+    private final OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     /*
      * POST /api/order — request body:
@@ -39,41 +32,23 @@ public class OrderController {
      */
     @PostMapping
     public HttpStatus saveOrder(@Valid @RequestBody CreateOrderRequest orderRequest, Principal principal) {
-        Order newOrder = new Order();
-        List<CreateOrderItemRequest> items = orderRequest.getItems();
-
-        String userEmail = principal.getName();
-        BigDecimal orderTotalPrice = BigDecimal.ZERO;
-        for (CreateOrderItemRequest i : items) {
-            Product product = productServiceImpl.getProductById(i.getProductId());
-            OrderItem orderItem = OrderItem.snapshotOf(product, i.getQuantity());
-            newOrder.addOrderItem(orderItem);
-
-            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
-            orderTotalPrice = orderTotalPrice.add(lineTotal);
-        }
-
-        newOrder.setPriceSum(orderTotalPrice);
-        newOrder.setUserId(userRepository.findByEmail(userEmail).getId());
-
-        orderServiceImpl.saveOrder(newOrder);
-
+        orderService.createOrder(orderRequest, principal.getName());
         return HttpStatus.OK;
     }
+
     @GetMapping("{id}")
     public OrderDetailResponse getOrderDetailById(@PathVariable("id") Long id) {
-        return orderServiceImpl.getOrderDetailById(id);
+        return orderService.getOrderDetailById(id);
     }
 
     @GetMapping()
     public PageResponse<OrderSummaryResponse> getOrdersByPage(@RequestParam(name = "page") int page) {
-        return orderServiceImpl.getOrdersByPage(page);
+        return orderService.getOrdersByPage(page);
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable("id") Long id) {
-        orderServiceImpl.deleteOrder(id);
-        return new ResponseEntity<String>("Order deleted successfully", HttpStatus.OK);
+        orderService.deleteOrder(id);
+        return new ResponseEntity<>("Order deleted successfully", HttpStatus.OK);
     }
-
 }

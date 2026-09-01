@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #15 合併後）
+最後更新：2026-09-01（PR #16 合併後）
 
 ## Current Baseline
 
@@ -38,6 +38,7 @@
 - [x] [PR #13](https://github.com/albertkingdom/spring-boot-shopping-website/pull/13)：`OrderItem` 新增 `product_name` + `unit_price` 快照欄位（`V3__order_item_snapshot_columns.sql`），下單時透過 `OrderItem.snapshotOf(product, quantity)` 拷貝當下值，讀單改讀 snapshot 不再 join `product` 表，並附 `docs/order-immutability.md`。
 - [x] [PR #14](https://github.com/albertkingdom/spring-boot-shopping-website/pull/14)：`/api/register`、`/api/login`、`/api/order` 全部改用 `dto/request/*` 專用 DTO（`RegisterRequest`、`LoginRequest`、`CreateOrderRequest`、`CreateOrderItemRequest`），加 Bean Validation，`ApiExceptionHandler` 加 `MethodArgumentNotValidException` 處理器，並附 mass assignment 攻擊測試與 `docs/dto-and-mass-assignment.md`。刪除死程式碼 `OrderRequest` / `OrderRequestItem` / `InvalidRequestException`。
 - [x] [PR #15](https://github.com/albertkingdom/spring-boot-shopping-website/pull/15)：新增 response DTO 家族 `ProductResponse`、`OrderSummaryResponse`、`OrderDetailResponse`、`OrderItemResponse`、`PageResponse<T>`；`ProductService` / `OrderService` 讀取端不再回傳 JPA entity；controllers 全部改回 DTO；刪除舊 wrapper `CustomOrderResponse`、`OrderItemDetail`、`ProductsPagination`、`OrdersPagination`。
+- [x] [PR #16](https://github.com/albertkingdom/spring-boot-shopping-website/pull/16)：訂單建立邏輯（商品查詢、快照、價格計算、user 查詢）由 `OrderController` 搬到 `OrderService.createOrder`，加 `@Transactional`；全部 controller / service / filter / SecurityConfig 改為 constructor injection；Controller 依賴 service 介面而非 `*Impl`；`ProductServiceImpl` update/delete 也加 `@Transactional`；新增 `OrderServiceImplTest.createOrder_snapshotsProductsAndSumsTotalExactly` 用 BigDecimal 驗證訂單總額精確計算；附 `docs/layered-architecture.md`。
 
 ## Next Actions
 

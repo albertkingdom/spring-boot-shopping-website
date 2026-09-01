@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -43,6 +44,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public Product updateProduct(Product product, Long id) {
         Product existedProduct = getProductById(id);
         existedProduct.setPrice(product.getPrice());
@@ -53,6 +55,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public void deleteProduct(Long id) {
         productRepository.findById(id).orElseThrow(RuntimeException::new);
         productRepository.deleteById(id);

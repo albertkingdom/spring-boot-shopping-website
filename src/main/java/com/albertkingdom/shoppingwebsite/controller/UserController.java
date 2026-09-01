@@ -5,13 +5,11 @@ import com.albertkingdom.shoppingwebsite.dto.request.RegisterRequest;
 import com.albertkingdom.shoppingwebsite.model.AuthenticationResponse;
 import com.albertkingdom.shoppingwebsite.model.CustomResponse;
 import com.albertkingdom.shoppingwebsite.model.User;
-import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import com.albertkingdom.shoppingwebsite.service.UserServiceImpl;
+import com.albertkingdom.shoppingwebsite.service.UserService;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,10 +17,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 
@@ -30,17 +31,18 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private UserServiceImpl userServiceImpl;
+    public UserController(UserService userService,
+                          AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil) {
+        this.userService = userService;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+    }
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtUtil jwtUtil;
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
     public ResponseEntity<CustomResponse> register(@Valid @RequestBody RegisterRequest request) {
         User user = new User();
@@ -48,8 +50,8 @@ public class UserController {
         user.setPassword(request.getPassword());
         user.setName(request.getName());
 
-        userServiceImpl.saveUser(user);
-        userServiceImpl.addRoleToUser(user.getEmail(), "ROLE_USER");
+        userService.saveUser(user);
+        userService.addRoleToUser(user.getEmail(), "ROLE_USER");
 
         CustomResponse resultResponse = new CustomResponse("register success", null);
         return new ResponseEntity<>(resultResponse, HttpStatus.OK);
@@ -57,7 +59,6 @@ public class UserController {
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) throws Exception {
-
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
@@ -70,7 +71,6 @@ public class UserController {
         org.springframework.security.core.userdetails.User authenticatedUser = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
         String access_token = jwtUtil.generateAccessToken(authenticatedUser);
         String refresh_token = jwtUtil.generateRefreshToken(authenticatedUser);
-
 
         return ResponseEntity.ok(new AuthenticationResponse(access_token, refresh_token, authenticatedUser.getUsername()));
     }
@@ -86,7 +86,7 @@ public class UserController {
     @RequestMapping("/api/user/all")
     @GetMapping
     public ResponseEntity<?> getAllUser() {
-        return new ResponseEntity<>(userServiceImpl.getAllUsers(), HttpStatus.OK);
+        return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/refreshToken", method = RequestMethod.POST)
@@ -102,7 +102,7 @@ public class UserController {
                 DecodedJWT decodedJWT = jwtUtil.decodeJWT(refreshToken);
                 String username = decodedJWT.getSubject(); // user email
 
-                User user = userServiceImpl.getUser(username);
+                User user = userService.getUser(username);
                 String accessToken = jwtUtil.regenerateAccessToken(user);
                 return ResponseEntity.ok(new AuthenticationResponse(accessToken, refreshToken, username));
 
