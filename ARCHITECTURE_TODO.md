@@ -51,8 +51,8 @@
 
 - [ ] 將 `model` 拆分為 `entity`、`dto/request` 與 `dto/response`。
 - [x] 為登入、註冊、商品建立／更新及訂單建立建立專用 Request DTO。
-- [ ] 為商品、訂單、使用者與分頁建立專用 Response DTO。
-- [ ] API 不直接接受或回傳 JPA Entity。
+- [x] 為商品、訂單、使用者與分頁建立專用 Response DTO。
+- [x] API 不直接接受或回傳 JPA Entity。
 - [ ] 建立集中且可測試的 Entity／DTO mapping 邏輯。
 
 ### 驗收條件

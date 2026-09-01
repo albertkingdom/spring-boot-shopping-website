@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #14 合併後）
+最後更新：2026-09-01（PR #15 合併後）
 
 ## Current Baseline
 
@@ -37,6 +37,7 @@
 - [x] [PR #12](https://github.com/albertkingdom/spring-boot-shopping-website/pull/12)：`Product.price` 與 `Order.priceSum` 由 `Float` 改為 `BigDecimal`（`DECIMAL(10,2)`），`OrderController` 訂單累加改用 BigDecimal 精確運算，加入 `V2__price_columns_to_decimal.sql` migration 與 `docs/money-types.md`。
 - [x] [PR #13](https://github.com/albertkingdom/spring-boot-shopping-website/pull/13)：`OrderItem` 新增 `product_name` + `unit_price` 快照欄位（`V3__order_item_snapshot_columns.sql`），下單時透過 `OrderItem.snapshotOf(product, quantity)` 拷貝當下值，讀單改讀 snapshot 不再 join `product` 表，並附 `docs/order-immutability.md`。
 - [x] [PR #14](https://github.com/albertkingdom/spring-boot-shopping-website/pull/14)：`/api/register`、`/api/login`、`/api/order` 全部改用 `dto/request/*` 專用 DTO（`RegisterRequest`、`LoginRequest`、`CreateOrderRequest`、`CreateOrderItemRequest`），加 Bean Validation，`ApiExceptionHandler` 加 `MethodArgumentNotValidException` 處理器，並附 mass assignment 攻擊測試與 `docs/dto-and-mass-assignment.md`。刪除死程式碼 `OrderRequest` / `OrderRequestItem` / `InvalidRequestException`。
+- [x] [PR #15](https://github.com/albertkingdom/spring-boot-shopping-website/pull/15)：新增 response DTO 家族 `ProductResponse`、`OrderSummaryResponse`、`OrderDetailResponse`、`OrderItemResponse`、`PageResponse<T>`；`ProductService` / `OrderService` 讀取端不再回傳 JPA entity；controllers 全部改回 DTO；刪除舊 wrapper `CustomOrderResponse`、`OrderItemDetail`、`ProductsPagination`、`OrdersPagination`。
 
 ## Next Actions
 
