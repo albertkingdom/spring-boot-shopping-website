@@ -1,8 +1,8 @@
 package com.albertkingdom.shoppingwebsite.dto.request;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * Public shape for POST /api/register. Deliberately exposes only the fields a

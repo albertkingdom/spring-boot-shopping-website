@@ -3,79 +3,62 @@ package com.albertkingdom.shoppingwebsite;
 
 import com.albertkingdom.shoppingwebsite.filter.CustomAuthorizationFilter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
+@Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    private final UserDetailsService userDetailsService;
+public class SecurityConfig {
+
     private final CustomAuthorizationFilter customAuthorizationFilter;
 
-    public SecurityConfig(UserDetailsService userDetailsService,
-                          CustomAuthorizationFilter customAuthorizationFilter) {
-        this.userDetailsService = userDetailsService;
+    public SecurityConfig(CustomAuthorizationFilter customAuthorizationFilter) {
         this.customAuthorizationFilter = customAuthorizationFilter;
     }
 
     private static final String[] AUTH_WHITELIST = {
-            // -- Swagger UI v2
-            "/v2/api-docs",
-            "/swagger-resources",
-            "/swagger-resources/**",
-            "/configuration/ui",
-            "/configuration/security",
-            "/swagger-ui.html",
-            "/webjars/**",
-            // -- Swagger UI v3 (OpenAPI)
+            // -- springdoc-openapi (Swagger UI v3)
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            // other public endpoints of your API may be appended to this array
+            "/swagger-ui.html",
+            // -- public endpoints
             "/api/login",
             "/api/register",
             "/api/refreshToken",
             "/api/order/pay/confirm"
     };
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .cors() //allow cors option preflight from browser
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
-        http.authorizeRequests()
-                .antMatchers(AUTH_WHITELIST).permitAll()
-                .antMatchers(HttpMethod.GET,"/api/products/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers(HttpMethod.DELETE,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers(HttpMethod.PUT,"/api/products/**").hasAnyAuthority("ROLE_ADMIN")
-                .antMatchers(HttpMethod.POST,"/api/order/**").hasAnyAuthority("ROLE_USER") // create order
-                .antMatchers("/api/order/**").hasAnyAuthority("ROLE_ADMIN")  //allow user logged in and with role as "role_admin"
-                .antMatchers("/api/user/**").hasAuthority("ROLE_ADMIN")
-                .anyRequest().authenticated(); // deny all access without authenticated
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {}) // enable CORS with the WebMvcConfigurer defined in CORSConfig
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/order/**").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/order/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/user/**").hasAuthority("ROLE_ADMIN")
+                        .anyRequest().authenticated())
+                .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
-
-        http.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
-    }
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // 1. set password encode method
-        // 2. set spring security how to get login user information
-        auth.userDetailsService(userDetailsService).passwordEncoder(new BCryptPasswordEncoder());
+        return http.build();
     }
 
     @Bean
-    @Override
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

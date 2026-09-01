@@ -18,9 +18,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,15 +68,13 @@ public class UserController {
     }
 
     // todo: if use jwt solution, no need to logout in backend
-    @RequestMapping("/api/logout")
-    @GetMapping
+    @GetMapping("/api/logout")
     public String logout(HttpSession session) {
         session.removeAttribute("user");
         return "you have log out";
     }
 
-    @RequestMapping("/api/user/all")
-    @GetMapping
+    @GetMapping("/api/user/all")
     public ResponseEntity<?> getAllUser() {
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }

@@ -1,6 +1,6 @@
 package com.albertkingdom.shoppingwebsite.dto.request;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Public shape for POST /api/login. Contains only the credentials required by
