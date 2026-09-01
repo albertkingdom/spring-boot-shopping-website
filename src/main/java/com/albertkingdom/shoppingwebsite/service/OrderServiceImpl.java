@@ -1,28 +1,59 @@
 package com.albertkingdom.shoppingwebsite.service;
 
+import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderItemRequest;
+import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderItemResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.model.Order;
+import com.albertkingdom.shoppingwebsite.model.OrderItem;
+import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.repository.OrderRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
-    @Autowired
-    private OrderRepository orderRepository;
-    @Autowired
-    private UserRepository userRepository;
+
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final ProductService productService;
+
+    public OrderServiceImpl(OrderRepository orderRepository,
+                            UserRepository userRepository,
+                            ProductService productService) {
+        this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
+        this.productService = productService;
+    }
+
+    @Override
+    @Transactional
+    public Long createOrder(CreateOrderRequest request, String userEmail) {
+        Order order = new Order();
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CreateOrderItemRequest item : request.getItems()) {
+            Product product = productService.getProductById(item.getProductId());
+            order.addOrderItem(OrderItem.snapshotOf(product, item.getQuantity()));
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        order.setPriceSum(total);
+        order.setUserId(userRepository.findByEmail(userEmail).getId());
+
+        return orderRepository.save(order).getId();
+    }
 
     @Override
     public Order saveOrder(Order order) {
@@ -47,6 +78,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OrderDetailResponse getOrderDetailById(Long id) {
         Order result = orderRepository.findById(id).orElseThrow(RuntimeException::new);
 
@@ -67,6 +99,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public void deleteOrder(Long id) {
         orderRepository.findById(id).orElseThrow(RuntimeException::new);
         orderRepository.deleteById(id);

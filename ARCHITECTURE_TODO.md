@@ -34,11 +34,11 @@
 
 ## P1：分層與交易邊界
 
-- [ ] 將訂單建立、商品查詢、價格計算、使用者查詢與 Entity 組裝移到 `OrderService`。
-- [ ] Controller 只負責輸入驗證、呼叫 application/service layer 與建立 HTTP response。
-- [ ] Controller 改為依賴 `OrderService`、`ProductService`、`UserService` 介面，而不是 `*ServiceImpl`。
-- [ ] 全面改用 constructor injection，移除 field injection。
-- [ ] 為建立訂單、更新商品、刪除訂單及其他跨多次 DB 操作的方法加入適當的 `@Transactional`。
+- [x] 將訂單建立、商品查詢、價格計算、使用者查詢與 Entity 組裝移到 `OrderService`。
+- [x] Controller 只負責輸入驗證、呼叫 application/service layer 與建立 HTTP response。
+- [x] Controller 改為依賴 `OrderService`、`ProductService`、`UserService` 介面，而不是 `*ServiceImpl`。
+- [x] 全面改用 constructor injection，移除 field injection。
+- [x] 為建立訂單、更新商品、刪除訂單及其他跨多次 DB 操作的方法加入適當的 `@Transactional`。
 - [ ] 定義 Cloudinary 操作失敗時的補償策略，避免 DB 與圖片狀態不一致。
 
 ### 驗收條件
