@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,9 +54,9 @@ class ProductControllerTest {
     @Test
     void getProductsByPage() throws Exception {
         List<Product> listProducts = new ArrayList<>();
-        listProducts.add(new Product("product1",999F));
-        listProducts.add(new Product("product2",999F));
-        listProducts.add(new Product("product3",999F));
+        listProducts.add(new Product("product1", new BigDecimal("999.00")));
+        listProducts.add(new Product("product2", new BigDecimal("999.00")));
+        listProducts.add(new Product("product3", new BigDecimal("999.00")));
 
         ProductsPagination result = new ProductsPagination(listProducts, 1, 3L);
         Mockito.when(productService.getProductsByPage(0)).thenReturn(result); //模擬controller method會調用到的service方法回傳值
@@ -79,8 +80,8 @@ class ProductControllerTest {
     void saveProduct_shouldReturn200_whenNameAndPriceIsValid() throws Exception {
         Product product = new Product();
         product.setName("product");
-        product.setPrice(888F);
-        Product savedProduct = new Product(null,"product",888F);
+        product.setPrice(new BigDecimal("888.00"));
+        Product savedProduct = new Product(null, "product", new BigDecimal("888.00"));
 
 
         // Mock the result from service
@@ -144,7 +145,7 @@ class ProductControllerTest {
     @WithMockUser(username = "admin@gmail.com", password = "myadmin", roles = "ADMIN")
     void updateProduct() throws Exception {
         Long id = 1L;
-        Product product = new Product(1L,"product",888F);
+        Product product = new Product(1L, "product", new BigDecimal("888.00"));
 
         Mockito.when(productService.updateProduct(any(Product.class), eq(id))).thenReturn(product);
 
@@ -170,7 +171,7 @@ class ProductControllerTest {
     @Test
     void deleteProduct() throws Exception {
         Long id = 1L;
-        Product testProduct = new Product("test",888F,"url", "imgName");
+        Product testProduct = new Product("test", new BigDecimal("888.00"), "url", "imgName");
         Mockito.doNothing().when(productService).deleteProduct(id);
 
         Mockito.when(productService.getProductById(id)).thenReturn(testProduct);

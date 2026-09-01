@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 
@@ -46,12 +47,14 @@ public class OrderController {
         List<OrderRequestItem> items = orderRequest.getItems();
 
         String userEmail = principal.getName();
-        float orderTotalPrice = 0F;
+        BigDecimal orderTotalPrice = BigDecimal.ZERO;
         for (OrderRequestItem i : items) {
             OrderItem orderItem = new OrderItem(i.getProductId(), i.getProductCount());
             newOrder.addOrderItem(orderItem);
 
-            orderTotalPrice += productServiceImpl.getProductById(i.getProductId()).getPrice() * i.getProductCount();
+            BigDecimal unitPrice = productServiceImpl.getProductById(i.getProductId()).getPrice();
+            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(i.getProductCount()));
+            orderTotalPrice = orderTotalPrice.add(lineTotal);
         }
 
         newOrder.setPriceSum(orderTotalPrice);

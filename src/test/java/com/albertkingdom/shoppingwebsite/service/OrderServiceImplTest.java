@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +26,7 @@ class OrderServiceImplTest {
     @Test
     void getOrderById() {
         Long id = 1L;
-        Float priceSum = 999F;
+        BigDecimal priceSum = new BigDecimal("999.00");
         Long userId = 1L;
 
         Order order = new Order();
