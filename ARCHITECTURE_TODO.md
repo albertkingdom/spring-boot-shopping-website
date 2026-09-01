@@ -20,7 +20,7 @@
 
 ## P1：帳號與初始化資料
 
-- [ ] 使用 Flyway 或 Liquibase 建立資料庫 schema migration。
+- [x] 使用 Flyway 或 Liquibase 建立資料庫 schema migration。
 - [ ] 透過 migration 或僅限開發環境的 seed 建立 `ROLE_USER` 與 `ROLE_ADMIN`。
 - [ ] 提供安全、可重複執行的管理員建立方式，不在程式碼中硬編碼正式密碼。
 - [ ] 將「建立使用者」與「加入預設角色」放入同一個 `@Transactional` Service 方法。
