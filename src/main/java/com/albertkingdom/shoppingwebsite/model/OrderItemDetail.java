@@ -1,11 +1,13 @@
 package com.albertkingdom.shoppingwebsite.model;
 
+import java.math.BigDecimal;
+
 public class OrderItemDetail {
     private String productName;
-    private Float productPrice;
+    private BigDecimal productPrice;
     private Integer quantity;
 
-    public OrderItemDetail(String productName, Float productPrice, Integer quantity) {
+    public OrderItemDetail(String productName, BigDecimal productPrice, Integer quantity) {
         this.productName = productName;
         this.productPrice = productPrice;
         this.quantity = quantity;
@@ -19,11 +21,11 @@ public class OrderItemDetail {
         this.productName = productName;
     }
 
-    public Float getProductPrice() {
+    public BigDecimal getProductPrice() {
         return productPrice;
     }
 
-    public void setProductPrice(Float productPrice) {
+    public void setProductPrice(BigDecimal productPrice) {
         this.productPrice = productPrice;
     }
 

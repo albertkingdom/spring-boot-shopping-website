@@ -1,9 +1,8 @@
 package com.albertkingdom.shoppingwebsite.model;
 
 
-
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "product")
@@ -12,30 +11,27 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private Float price;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal price;
     private String imgUrl;
     private String imgName;
-
-
-//    @ManyToOne
-//    private Order order;
 
     public Product() {
     }
 
-    public Product(String name, Float price) {
-
+    public Product(String name, BigDecimal price) {
         this.name = name;
         this.price = price;
     }
 
-    public Product(Long id, String name, Float price) {
+    public Product(Long id, String name, BigDecimal price) {
         this.id = id;
         this.name = name;
         this.price = price;
     }
 
-    public Product(String name, Float price, String imgUrl, String imgName) {
+    public Product(String name, BigDecimal price, String imgUrl, String imgName) {
         this.name = name;
         this.price = price;
         this.imgUrl = imgUrl;
@@ -58,11 +54,11 @@ public class Product {
         this.name = name;
     }
 
-    public Float getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Float price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 

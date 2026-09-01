@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,9 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private final UUID orderId = UUID.randomUUID();
-    private Float priceSum;
+
+    @Column(name = "price_sum", precision = 10, scale = 2)
+    private BigDecimal priceSum;
     private Long userId;
     @Column(name="created_at", insertable = false)
     private Timestamp createdAt;
@@ -37,11 +40,11 @@ public class Order {
         this.id = id;
     }
 
-    public Float getPriceSum() {
+    public BigDecimal getPriceSum() {
         return priceSum;
     }
 
-    public void setPriceSum(Float priceSum) {
+    public void setPriceSum(BigDecimal priceSum) {
         this.priceSum = priceSum;
     }
 

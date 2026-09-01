@@ -1,18 +1,19 @@
 package com.albertkingdom.shoppingwebsite.model;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 
 public class CustomOrderResponse {
     private Long id;
-    private Float priceSum;
+    private BigDecimal priceSum;
     private Long userId;
     private String userEmail;
     private List<OrderItemDetail> orderItemDetailList;
 
 
-    public CustomOrderResponse(Long id, Float priceSum, Long userId, String userEmail, List<OrderItemDetail> orderItemDetailList) {
+    public CustomOrderResponse(Long id, BigDecimal priceSum, Long userId, String userEmail, List<OrderItemDetail> orderItemDetailList) {
         this.id = id;
         this.priceSum = priceSum;
         this.userId = userId;
@@ -28,11 +29,11 @@ public class CustomOrderResponse {
         this.id = id;
     }
 
-    public Float getPriceSum() {
+    public BigDecimal getPriceSum() {
         return priceSum;
     }
 
-    public void setPriceSum(Float priceSum) {
+    public void setPriceSum(BigDecimal priceSum) {
         this.priceSum = priceSum;
     }
 

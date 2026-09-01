@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -34,7 +35,7 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<Product> saveProduct(@RequestParam("productName") @NotBlank String productName,
-                                               @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+$", message = "Must be digits.") String productPrice,
+                                               @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
                                                @RequestParam(value = "productImage", required = false) MultipartFile file
     ) {
 
@@ -47,7 +48,7 @@ public class ProductController {
                 imgUrl = uploadResult.get("url").toString();
                 imgName = uploadResult.get("public_id").toString();
             }
-            Product newProduct = productService.saveProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName));
+            Product newProduct = productService.saveProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName));
 
             return ResponseEntity.ok().body(newProduct);
         } catch (IOException e) {
@@ -71,7 +72,7 @@ public class ProductController {
 
     @PutMapping("{id}")
     public ResponseEntity<Product> updateProduct(@RequestParam("productName") @NotBlank String productName,
-                                                 @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+$", message = "Must be digits.") String productPrice,
+                                                 @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
                                                  @RequestParam(value = "productImage", required = false) MultipartFile file,
                                                  @PathVariable("id") Long id
     ) {
@@ -85,7 +86,7 @@ public class ProductController {
                 imgUrl = uploadResult.get("url").toString();
                 imgName = uploadResult.get("public_id").toString();
             }
-            Product updatedProduct = productService.updateProduct(new Product(productName, Float.parseFloat(productPrice), imgUrl, imgName), id);
+            Product updatedProduct = productService.updateProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName), id);
 
             return ResponseEntity.ok().body(updatedProduct);
         } catch (IOException e) {
