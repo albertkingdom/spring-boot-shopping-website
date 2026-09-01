@@ -1,16 +1,13 @@
 package com.albertkingdom.shoppingwebsite.handler;
 
-import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
 import com.albertkingdom.shoppingwebsite.resource.FieldResource;
 import com.albertkingdom.shoppingwebsite.resource.InvalidErrorResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -23,63 +20,52 @@ public class ApiExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     /**
-     *  deal with invalid request parameters
-     *  return following error json to front-end
+     * Handles Bean Validation failures on {@code @Valid @RequestBody} DTOs.
+     * <p>
+     * Response shape:
+     * <pre>{@code
      * {
-     *     "message": "Invalid parameter",
-     *     "errors": [
-     *         {
-     *             "resource": "user",
-     *             "field": "name",
-     *             "code": "NotEmpty",
-     *             "message": "Name should not be empty."
-     *         },
-     *         {
-     *             "resource": "user",
-     *             "field": "email",
-     *             "code": "Email",
-     *             "message": "Not a valid email format."
-     *         },
-     *         {
-     *             "resource": "user",
-     *             "field": "password",
-     *             "code": "Size",
-     *             "message": "Password length should be at least 6 characters."
-     *         }
-     *     ]
+     *   "message": "Invalid parameter",
+     *   "errors": [
+     *     { "resource": "registerRequest", "field": "email", "code": "Email",
+     *       "message": "Not a valid email format." },
+     *     ...
+     *   ]
      * }
-     * @param e
-     * @return
+     * }</pre>
      */
-    @ExceptionHandler(InvalidRequestException.class)
-    @ResponseBody
-    public ResponseEntity<?> handleInvalidRequest(InvalidRequestException e) {
-        Errors errors = e.getErrors();
-        List<FieldError> fieldErrors = errors.getFieldErrors();
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+        log.debug("request body validation failed count={}", fieldErrors.size());
+
         List<FieldResource> fieldResources = new ArrayList<>();
         for (FieldError fieldError : fieldErrors) {
-            FieldResource fieldResource = new FieldResource(fieldError.getObjectName(), fieldError.getField(), fieldError.getCode(), fieldError.getDefaultMessage());
-            fieldResources.add(fieldResource);
+            fieldResources.add(new FieldResource(
+                    fieldError.getObjectName(),
+                    fieldError.getField(),
+                    fieldError.getCode(),
+                    fieldError.getDefaultMessage()));
         }
-        InvalidErrorResource ier = new InvalidErrorResource(e.getMessage(), fieldResources);
-
-        return new ResponseEntity<>(ier, HttpStatus.BAD_REQUEST);
-    }
-
-    /** For @requestParam validation, which throw ConstraintViolationException
-     */
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
-        log.debug("constraint violation count={}", e.getConstraintViolations().size());
-        Set<ConstraintViolation<?>> errMsgs = e.getConstraintViolations();
-
-        List<FieldResource> fieldResources = new ArrayList<>();
-        for(ConstraintViolation<?> errMsg: errMsgs){
-            FieldResource fieldResource = new FieldResource(null, errMsg.getPropertyPath().toString(), null, errMsg.getMessage());
-            fieldResources.add(fieldResource);
-        }
-        InvalidErrorResource ier = new InvalidErrorResource(e.getMessage(), fieldResources);
+        InvalidErrorResource ier = new InvalidErrorResource("Invalid parameter", fieldResources);
         return ResponseEntity.badRequest().body(ier);
     }
 
+    /**
+     * Handles Bean Validation failures on {@code @RequestParam} / method-level
+     * constraints (which throw ConstraintViolationException instead of
+     * MethodArgumentNotValidException).
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
+        Set<ConstraintViolation<?>> violations = e.getConstraintViolations();
+        log.debug("constraint violation count={}", violations.size());
+
+        List<FieldResource> fieldResources = new ArrayList<>();
+        for (ConstraintViolation<?> v : violations) {
+            fieldResources.add(new FieldResource(null, v.getPropertyPath().toString(), null, v.getMessage()));
+        }
+        InvalidErrorResource ier = new InvalidErrorResource("Invalid parameter", fieldResources);
+        return ResponseEntity.badRequest().body(ier);
+    }
 }

@@ -1,6 +1,7 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
-import com.albertkingdom.shoppingwebsite.Exception.InvalidRequestException;
+import com.albertkingdom.shoppingwebsite.dto.request.LoginRequest;
+import com.albertkingdom.shoppingwebsite.dto.request.RegisterRequest;
 import com.albertkingdom.shoppingwebsite.model.AuthenticationResponse;
 import com.albertkingdom.shoppingwebsite.model.CustomResponse;
 import com.albertkingdom.shoppingwebsite.model.User;
@@ -17,7 +18,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -42,15 +42,13 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
-    public ResponseEntity<CustomResponse> register(@Valid @RequestBody User user, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()){
-            throw new InvalidRequestException("Invalid parameter", bindingResult);
-        }
+    public ResponseEntity<CustomResponse> register(@Valid @RequestBody RegisterRequest request) {
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(request.getPassword());
+        user.setName(request.getName());
 
-        /* create a user and add default role as "ROLE_USER"
-         */
         userServiceImpl.saveUser(user);
-
         userServiceImpl.addRoleToUser(user.getEmail(), "ROLE_USER");
 
         CustomResponse resultResponse = new CustomResponse("register success", null);
@@ -58,15 +56,15 @@ public class UserController {
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)
-    public ResponseEntity<?> login(@RequestBody User user) throws Exception {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) throws Exception {
 
-        Authentication authentication = null;
+        Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword())
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (AuthenticationException e) {
-            log.debug("login failed for email={}", user.getEmail());
+            log.debug("login failed for email={}", request.getEmail());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect username or password");
         }
         org.springframework.security.core.userdetails.User authenticatedUser = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();

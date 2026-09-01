@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #13 合併後）
+最後更新：2026-09-01（PR #14 合併後）
 
 ## Current Baseline
 
@@ -36,6 +36,7 @@
 - [x] [PR #11](https://github.com/albertkingdom/spring-boot-shopping-website/pull/11)：導入 Flyway（`flyway-core` 8.0.5），加入 `V1__baseline.sql`，將 `ddl-auto` 由 `update` 改為 `validate`，並附 `docs/database-migration.md`。Testcontainers 整合骨架（Batch 1 #2）因 Java 8 + Testcontainers 1.19 對 Docker Desktop for Mac 相容問題，延到 Batch 8 Java 升級後再做。
 - [x] [PR #12](https://github.com/albertkingdom/spring-boot-shopping-website/pull/12)：`Product.price` 與 `Order.priceSum` 由 `Float` 改為 `BigDecimal`（`DECIMAL(10,2)`），`OrderController` 訂單累加改用 BigDecimal 精確運算，加入 `V2__price_columns_to_decimal.sql` migration 與 `docs/money-types.md`。
 - [x] [PR #13](https://github.com/albertkingdom/spring-boot-shopping-website/pull/13)：`OrderItem` 新增 `product_name` + `unit_price` 快照欄位（`V3__order_item_snapshot_columns.sql`），下單時透過 `OrderItem.snapshotOf(product, quantity)` 拷貝當下值，讀單改讀 snapshot 不再 join `product` 表，並附 `docs/order-immutability.md`。
+- [x] [PR #14](https://github.com/albertkingdom/spring-boot-shopping-website/pull/14)：`/api/register`、`/api/login`、`/api/order` 全部改用 `dto/request/*` 專用 DTO（`RegisterRequest`、`LoginRequest`、`CreateOrderRequest`、`CreateOrderItemRequest`），加 Bean Validation，`ApiExceptionHandler` 加 `MethodArgumentNotValidException` 處理器，並附 mass assignment 攻擊測試與 `docs/dto-and-mass-assignment.md`。刪除死程式碼 `OrderRequest` / `OrderRequestItem` / `InvalidRequestException`。
 
 ## Next Actions
 
