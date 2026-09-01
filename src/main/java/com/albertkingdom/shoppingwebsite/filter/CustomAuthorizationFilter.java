@@ -45,7 +45,7 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
             if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 try {
                     String token = authorizationHeader.substring("Bearer ".length());
-                    DecodedJWT decodedJWT = jwtUtil.decodeJWT(token);
+                    DecodedJWT decodedJWT = jwtUtil.verify(token, JwtUtil.TokenType.ACCESS);
                     String username = decodedJWT.getSubject();
                     String[] roles = decodedJWT.getClaim("roles").asArray(String.class);
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
@@ -56,12 +56,11 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                     filterChain.doFilter(request, response);
-                }catch (Exception exception) {
+                } catch (Exception exception) {
                     log.warn("jwt authorization failed", exception);
-                    response.setHeader("error", exception.getMessage());
                     response.setStatus(FORBIDDEN.value());
                     Map<String, String> error = new HashMap<>();
-                    error.put("error_message", exception.getMessage());
+                    error.put("error_message", "invalid access token");
                     response.setContentType(APPLICATION_JSON_VALUE);
                     new ObjectMapper().writeValue(response.getOutputStream(), error);
                 }

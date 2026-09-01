@@ -99,10 +99,10 @@
 
 ## P2：JWT 與 Spring Security
 
-- [ ] 將 access token 與 refresh token 加入明確的 token type，驗證時禁止互相替代。
-- [ ] 加入 issuer、audience 與必要的 JWT claim 驗證。
+- [x] 將 access token 與 refresh token 加入明確的 token type，驗證時禁止互相替代。
+- [x] 加入 issuer、audience 與必要的 JWT claim 驗證。
 - [ ] 評估 refresh token rotation、撤銷與登出策略。
-- [ ] 不將內部 JWT 驗證例外訊息直接回傳給客戶端。
+- [x] 不將內部 JWT 驗證例外訊息直接回傳給客戶端。
 - [x] 移除未使用的 `CustomAuthenticationFilter` 與舊 Session Interceptor。
 - [ ] 升級時將 `WebSecurityConfigurerAdapter` 改為 `SecurityFilterChain` 設定方式。
 - [ ] 為未登入、一般使用者與管理員建立完整的 endpoint authorization 測試。
