@@ -58,6 +58,18 @@ public class ApiExceptionHandler {
     }
 
     /**
+     * IllegalArgumentException from validation-style guards in services
+     * (e.g. rejected upload MIME type, oversized file). Returns 400 so the
+     * client can distinguish "bad request payload" from "server bug".
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
+        log.debug("illegal argument: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("message", e.getMessage()));
+    }
+
+    /**
      * Resource lookup miss. Returns 404 with a small JSON envelope.
      */
     @ExceptionHandler(ResourceNotFoundException.class)

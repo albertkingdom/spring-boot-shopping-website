@@ -2,6 +2,7 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.UploadedImage;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.service.ProductService;
@@ -18,8 +19,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Path;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -36,29 +35,27 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> saveProduct(@RequestParam("productName") @NotBlank String productName,
-                                                       @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
-                                                       @RequestParam(value = "productImage", required = false) MultipartFile file
+    public ResponseEntity<ProductResponse> saveProduct(
+            @RequestParam("productName") @NotBlank String productName,
+            @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
+            @RequestParam(value = "productImage", required = false) MultipartFile file
     ) {
 
         String imgUrl = null;
         String imgName = null;
         try {
-            if (file != null) {
-                Path tempFilePath = cloudinaryService.saveUploadedFiles(file);
-                Map uploadResult = cloudinaryService.uploadFile(tempFilePath);
-                imgUrl = uploadResult.get("url").toString();
-                imgName = uploadResult.get("public_id").toString();
+            if (file != null && !file.isEmpty()) {
+                UploadedImage uploaded = cloudinaryService.uploadImage(file);
+                imgUrl = uploaded.getUrl();
+                imgName = uploaded.getPublicId();
             }
-            Product newProduct = productService.saveProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName));
-
+            Product newProduct = productService.saveProduct(
+                    new Product(productName, new BigDecimal(productPrice), imgUrl, imgName));
             return ResponseEntity.ok().body(ProductResponse.from(newProduct));
         } catch (IOException e) {
             log.error("failed to save product name={}", productName, e);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
         }
-
-        return ResponseEntity.badRequest().build();
-
     }
 
     @GetMapping
@@ -75,29 +72,30 @@ public class ProductController {
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@RequestParam("productName") @NotBlank String productName,
-                                                         @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
-                                                         @RequestParam(value = "productImage", required = false) MultipartFile file,
-                                                         @PathVariable("id") Long id
+    public ResponseEntity<ProductResponse> updateProduct(
+            @RequestParam("productName") @NotBlank String productName,
+            @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
+            @RequestParam(value = "productImage", required = false) MultipartFile file,
+            @PathVariable("id") Long id
     ) {
 
         String imgUrl = null;
         String imgName = null;
         try {
-            if (file != null) {
-                Path tempFilePath = cloudinaryService.saveUploadedFiles(file);
-                Map uploadResult = cloudinaryService.uploadFile(tempFilePath);
-                imgUrl = uploadResult.get("url").toString();
-                imgName = uploadResult.get("public_id").toString();
+            if (file != null && !file.isEmpty()) {
+                UploadedImage uploaded = cloudinaryService.uploadImage(file);
+                imgUrl = uploaded.getUrl();
+                imgName = uploaded.getPublicId();
             }
-            Product updatedProduct = productService.updateProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName), id);
-
+            // Nulls signal "no change" — updateProduct preserves the existing image
+            // when the caller didn't attach a new one.
+            Product updatedProduct = productService.updateProduct(
+                    new Product(productName, new BigDecimal(productPrice), imgUrl, imgName), id);
             return ResponseEntity.ok().body(ProductResponse.from(updatedProduct));
         } catch (IOException e) {
             log.error("failed to update product id={}", id, e);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
         }
-
-        return ResponseEntity.badRequest().build();
     }
 
     @DeleteMapping("{id}")
