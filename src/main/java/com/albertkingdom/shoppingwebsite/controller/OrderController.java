@@ -49,11 +49,11 @@ public class OrderController {
         String userEmail = principal.getName();
         BigDecimal orderTotalPrice = BigDecimal.ZERO;
         for (OrderRequestItem i : items) {
-            OrderItem orderItem = new OrderItem(i.getProductId(), i.getProductCount());
+            Product product = productServiceImpl.getProductById(i.getProductId());
+            OrderItem orderItem = OrderItem.snapshotOf(product, i.getProductCount());
             newOrder.addOrderItem(orderItem);
 
-            BigDecimal unitPrice = productServiceImpl.getProductById(i.getProductId()).getPrice();
-            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(i.getProductCount()));
+            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(i.getProductCount()));
             orderTotalPrice = orderTotalPrice.add(lineTotal);
         }
 

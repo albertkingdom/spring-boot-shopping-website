@@ -1,9 +1,10 @@
 package com.albertkingdom.shoppingwebsite.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
+
 /*
 for order request item {productId: xx, quantity: yy}
  */
@@ -24,15 +25,30 @@ public class OrderItem {
 
     private Integer quantity;
 
+    @Column(name = "product_name")
+    private String productName;
+
+    @Column(name = "unit_price", precision = 10, scale = 2)
+    private BigDecimal unitPrice;
+
 
     public OrderItem() {
     }
 
     public OrderItem(Long productId, Integer quantity) {
-
-
         this.productId = productId;
         this.quantity = quantity;
+    }
+
+    /**
+     * Snapshot the product's current name and unit price onto this line item so
+     * a later rename, reprice, or deletion cannot change historical orders.
+     */
+    public static OrderItem snapshotOf(Product product, Integer quantity) {
+        OrderItem item = new OrderItem(product.getId(), quantity);
+        item.productName = product.getName();
+        item.unitPrice = product.getPrice();
+        return item;
     }
 
     public Order getOrder() {
@@ -57,5 +73,21 @@ public class OrderItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
     }
 }
