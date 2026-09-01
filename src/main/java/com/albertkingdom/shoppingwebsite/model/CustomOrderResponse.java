@@ -29,7 +29,7 @@ public class CustomOrderResponse {
         this.id = id;
     }
 
-    public Float getPriceSum() {
+    public BigDecimal getPriceSum() {
         return priceSum;
     }
 
