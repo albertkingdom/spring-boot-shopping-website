@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-08-31（PR #10 合併後）
+最後更新：2026-09-01（PR #11 合併後）
 
 ## Current Baseline
 
@@ -33,6 +33,7 @@
 - [x] PR #3：Bump `actions/setup-java` 4.9.1 → 6.0.0（Dependabot）。
 - [x] PR #4：Bump `actions/checkout` 6.1.0 → 7.0.1（Dependabot）。
 - [x] [PR #10](https://github.com/albertkingdom/spring-boot-shopping-website/pull/10)：CORS 移除萬用 `*`，改為 `app.cors.allowed-origins` env 驅動白名單，預設允許 `http://localhost:3000`，並補上 preflight 測試。
+- [x] [PR #11](https://github.com/albertkingdom/spring-boot-shopping-website/pull/11)：導入 Flyway（`flyway-core` 8.0.5），加入 `V1__baseline.sql`，將 `ddl-auto` 由 `update` 改為 `validate`，並附 `docs/database-migration.md`。Testcontainers 整合骨架（Batch 1 #2）因 Java 8 + Testcontainers 1.19 對 Docker Desktop for Mac 相容問題，延到 Batch 8 Java 升級後再做。
 
 ## Next Actions
 
