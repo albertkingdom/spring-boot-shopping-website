@@ -2,6 +2,9 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderItemRequest;
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
+import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.model.*;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.service.OrderServiceImpl;
@@ -58,13 +61,12 @@ public class OrderController {
         return HttpStatus.OK;
     }
     @GetMapping("{id}")
-    public CustomOrderResponse getOrderDetailById(@PathVariable("id") Long id) {
-
+    public OrderDetailResponse getOrderDetailById(@PathVariable("id") Long id) {
         return orderServiceImpl.getOrderDetailById(id);
     }
 
     @GetMapping()
-    public OrdersPagination getOrdersByPage(@RequestParam(name = "page") int page ) {
+    public PageResponse<OrderSummaryResponse> getOrdersByPage(@RequestParam(name = "page") int page) {
         return orderServiceImpl.getOrdersByPage(page);
     }
 

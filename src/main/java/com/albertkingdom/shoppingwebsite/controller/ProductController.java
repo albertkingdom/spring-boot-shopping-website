@@ -1,7 +1,8 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
+import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
 import com.albertkingdom.shoppingwebsite.model.Product;
-import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.service.ProductService;
 import org.slf4j.Logger;
@@ -31,12 +32,10 @@ public class ProductController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-
-
     @PostMapping
-    public ResponseEntity<Product> saveProduct(@RequestParam("productName") @NotBlank String productName,
-                                               @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
-                                               @RequestParam(value = "productImage", required = false) MultipartFile file
+    public ResponseEntity<ProductResponse> saveProduct(@RequestParam("productName") @NotBlank String productName,
+                                                       @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
+                                                       @RequestParam(value = "productImage", required = false) MultipartFile file
     ) {
 
         String imgUrl = null;
@@ -50,7 +49,7 @@ public class ProductController {
             }
             Product newProduct = productService.saveProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName));
 
-            return ResponseEntity.ok().body(newProduct);
+            return ResponseEntity.ok().body(ProductResponse.from(newProduct));
         } catch (IOException e) {
             log.error("failed to save product name={}", productName, e);
         }
@@ -60,21 +59,22 @@ public class ProductController {
     }
 
     @GetMapping
-    public ProductsPagination getProductsByPage(@RequestParam(name = "page") int page) {
+    public PageResponse<ProductResponse> getProductsByPage(@RequestParam(name = "page") int page) {
         return productService.getProductsByPage(page);
     }
+
     // http://localhost:8080/api/products/1
     @GetMapping("{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) {
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable("id") Long id) {
         Product product = productService.getProductById(id);
-        return new ResponseEntity<Product>(product, HttpStatus.OK);
+        return new ResponseEntity<>(ProductResponse.from(product), HttpStatus.OK);
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Product> updateProduct(@RequestParam("productName") @NotBlank String productName,
-                                                 @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
-                                                 @RequestParam(value = "productImage", required = false) MultipartFile file,
-                                                 @PathVariable("id") Long id
+    public ResponseEntity<ProductResponse> updateProduct(@RequestParam("productName") @NotBlank String productName,
+                                                         @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
+                                                         @RequestParam(value = "productImage", required = false) MultipartFile file,
+                                                         @PathVariable("id") Long id
     ) {
 
         String imgUrl = null;
@@ -88,7 +88,7 @@ public class ProductController {
             }
             Product updatedProduct = productService.updateProduct(new Product(productName, new BigDecimal(productPrice), imgUrl, imgName), id);
 
-            return ResponseEntity.ok().body(updatedProduct);
+            return ResponseEntity.ok().body(ProductResponse.from(updatedProduct));
         } catch (IOException e) {
             log.error("failed to update product id={}", id, e);
         }
@@ -102,6 +102,6 @@ public class ProductController {
         String imgName = existedProduct.getImgName();
         productService.deleteProduct(id);
         cloudinaryService.deleteFile(imgName);
-        return new ResponseEntity<String>("Product deleted successfully", HttpStatus.OK);
+        return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
     }
 }

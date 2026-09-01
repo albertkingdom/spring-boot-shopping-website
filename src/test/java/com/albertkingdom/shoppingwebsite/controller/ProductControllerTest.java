@@ -1,7 +1,8 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
+import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
 import com.albertkingdom.shoppingwebsite.model.Product;
-import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
 import com.albertkingdom.shoppingwebsite.service.ProductService;
@@ -21,12 +22,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -53,45 +58,35 @@ class ProductControllerTest {
 
     @Test
     void getProductsByPage() throws Exception {
-        List<Product> listProducts = new ArrayList<>();
-        listProducts.add(new Product("product1", new BigDecimal("999.00")));
-        listProducts.add(new Product("product2", new BigDecimal("999.00")));
-        listProducts.add(new Product("product3", new BigDecimal("999.00")));
+        List<ProductResponse> items = Arrays.asList(
+                new ProductResponse(1L, "product1", new BigDecimal("999.00"), null),
+                new ProductResponse(2L, "product2", new BigDecimal("999.00"), null),
+                new ProductResponse(3L, "product3", new BigDecimal("999.00"), null));
+        PageResponse<ProductResponse> result = new PageResponse<>(items, 1, 3L);
+        Mockito.when(productService.getProductsByPage(0)).thenReturn(result);
 
-        ProductsPagination result = new ProductsPagination(listProducts, 1, 3L);
-        Mockito.when(productService.getProductsByPage(0)).thenReturn(result); //模擬controller method會調用到的service方法回傳值
-
-        String url = "/api/products?page=0";
-
-        MvcResult mvcResult = mockMvc.perform(get(url))
+        MvcResult mvcResult = mockMvc.perform(get("/api/products?page=0"))
                 .andExpect(status().isOk())
-                .andReturn(); //模擬get request
+                .andReturn();
 
-        String actualJsonResponse = mvcResult.getResponse().getContentAsString(); //模擬get request請求的response
+        String actualJsonResponse = mvcResult.getResponse().getContentAsString();
         log.info(actualJsonResponse);
 
         String expectedJsonResponse = objectMapper.writeValueAsString(result);
-
-        assertEquals(expectedJsonResponse, actualJsonResponse); //assert兩者結果相同
+        assertEquals(expectedJsonResponse, actualJsonResponse);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void saveProduct_shouldReturn200_whenNameAndPriceIsValid() throws Exception {
-        Product product = new Product();
-        product.setName("product");
-        product.setPrice(new BigDecimal("888.00"));
-        Product savedProduct = new Product(null, "product", new BigDecimal("888.00"));
-
-
-        // Mock the result from service
+        Product savedProduct = new Product(7L, "product", new BigDecimal("888.00"));
         Mockito.when(productService.saveProduct(any(Product.class))).thenReturn(savedProduct);
 
-        String url = "/api/products/";
-        String expectedJsonResponse = objectMapper.writeValueAsString(savedProduct);
+        ProductResponse expected = ProductResponse.from(savedProduct);
+        String expectedJsonResponse = objectMapper.writeValueAsString(expected);
 
         MvcResult mvcResult = mockMvc.perform(
-                        post(url)
+                        post("/api/products/")
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .param("productName", "product")
                                 .param("productPrice", "888")
@@ -100,19 +95,14 @@ class ProductControllerTest {
                 .andReturn();
         String actualJsonResponse = mvcResult.getResponse().getContentAsString();
         log.info("actualJsonResponse{}", actualJsonResponse);
-        assertEquals(expectedJsonResponse, actualJsonResponse); //assert兩者結果相同
-
-
+        assertEquals(expectedJsonResponse, actualJsonResponse);
     }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void saveProduct_shouldReturn400_whenNameOrPriceIsInValid() throws Exception {
-
-        String url = "/api/products/";
-
-
         MvcResult mvcResult = mockMvc.perform(
-                        post(url)
+                        post("/api/products/")
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .param("productName", "")
                                 .param("productPrice", "888")
@@ -123,49 +113,40 @@ class ProductControllerTest {
                 .andReturn();
         String actualJsonResponse = mvcResult.getResponse().getContentAsString();
         log.info("actualJsonResponse{}", actualJsonResponse);
-
     }
+
     @Test
     void getProductById() throws Exception {
-        Long id = 1L; //specify an id
-        Product product = new Product();
-        product.setId(id);
+        Long id = 1L;
+        Product product = new Product(id, "product", new BigDecimal("888.00"));
         Mockito.when(productService.getProductById(id)).thenReturn(product);
 
-        // get()的第2個參數是path variable值，可以有多個值
-        MvcResult mvcResult = mockMvc.perform(get("/api/products/{id}",id)).andExpect(status().isOk()).andReturn(); // real response
+        MvcResult mvcResult = mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        String expectedJsonResponse = objectMapper.writeValueAsString(product); //transform expected product object to string
-
+        String expectedJsonResponse = objectMapper.writeValueAsString(ProductResponse.from(product));
         assertEquals(expectedJsonResponse, mvcResult.getResponse().getContentAsString());
-
     }
 
     @Test
     @WithMockUser(username = "admin@gmail.com", password = "myadmin", roles = "ADMIN")
     void updateProduct() throws Exception {
         Long id = 1L;
-        Product product = new Product(1L, "product", new BigDecimal("888.00"));
-
+        Product product = new Product(id, "product", new BigDecimal("888.00"));
         Mockito.when(productService.updateProduct(any(Product.class), eq(id))).thenReturn(product);
 
-        try {
-            MvcResult mvcResult = mockMvc.perform(
-                    put("/api/products/{id}", id)
-                            .contentType(MediaType.MULTIPART_FORM_DATA)
-                            .param("productName", "product")
-                            .param("productPrice", "888")
+        MvcResult mvcResult = mockMvc.perform(
+                        put("/api/products/{id}", id)
+                                .contentType(MediaType.MULTIPART_FORM_DATA)
+                                .param("productName", "product")
+                                .param("productPrice", "888")
+                )
+                .andExpect(status().isOk())
+                .andReturn();
 
-            ).andReturn();
-            assertEquals(200,mvcResult.getResponse().getStatus());
-            String expectedJsonResponse = objectMapper.writeValueAsString(product); //transform expected product object to string
-            String actualJsonResponse = mvcResult.getResponse().getContentAsString();
-            assertEquals(expectedJsonResponse, actualJsonResponse);
-        } catch (Exception e) {
-            log.error("updateProduct threw", e);
-        }
-
-
+        String expectedJsonResponse = objectMapper.writeValueAsString(ProductResponse.from(product));
+        assertEquals(expectedJsonResponse, mvcResult.getResponse().getContentAsString());
     }
 
     @Test
@@ -173,11 +154,9 @@ class ProductControllerTest {
         Long id = 1L;
         Product testProduct = new Product("test", new BigDecimal("888.00"), "url", "imgName");
         Mockito.doNothing().when(productService).deleteProduct(id);
-
         Mockito.when(productService.getProductById(id)).thenReturn(testProduct);
 
         mockMvc.perform(delete("/api/products/{id}", id)).andExpect(status().isOk());
-        //productServiceImpl.deleteProduct is called 1 time
         Mockito.verify(productService, Mockito.times(1)).deleteProduct(id);
     }
 }

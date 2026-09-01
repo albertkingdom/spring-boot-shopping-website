@@ -1,7 +1,8 @@
 package com.albertkingdom.shoppingwebsite.service;
 
+import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
 import com.albertkingdom.shoppingwebsite.model.Product;
-import com.albertkingdom.shoppingwebsite.model.ProductsPagination;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,30 +13,28 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class ProductServiceImpl implements ProductService{
-    private ProductRepository productRepository;
+public class ProductServiceImpl implements ProductService {
+    private final ProductRepository productRepository;
 
     public ProductServiceImpl(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
-//    create a product in db
     @Override
     public Product saveProduct(Product product) {
         return productRepository.save(product);
     }
 
-//    list all products
     @Override
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
 
     @Override
-    public ProductsPagination getProductsByPage(int page) {
+    public PageResponse<ProductResponse> getProductsByPage(int page) {
         Pageable pageWithTenElementsDesc = PageRequest.of(page, 10, Sort.by("id").descending());
         Page<Product> result = productRepository.findAll(pageWithTenElementsDesc);
-        return new ProductsPagination(result.getContent(), result.getTotalPages(), result.getTotalElements());
+        return PageResponse.of(result, ProductResponse::from);
     }
 
     @Override
@@ -58,6 +57,4 @@ public class ProductServiceImpl implements ProductService{
         productRepository.findById(id).orElseThrow(RuntimeException::new);
         productRepository.deleteById(id);
     }
-
-
 }

@@ -1,6 +1,10 @@
 package com.albertkingdom.shoppingwebsite.service;
 
-import com.albertkingdom.shoppingwebsite.model.*;
+import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.OrderItemResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
+import com.albertkingdom.shoppingwebsite.model.Order;
 import com.albertkingdom.shoppingwebsite.repository.OrderRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +35,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrdersPagination getOrdersByPage(int page) {
+    public PageResponse<OrderSummaryResponse> getOrdersByPage(int page) {
         Pageable pageWithTenElementsDesc = PageRequest.of(page, 10, Sort.by("id").descending());
         Page<Order> result = orderRepository.findAll(pageWithTenElementsDesc);
-        return new OrdersPagination(result.getContent(), result.getTotalPages(), result.getTotalElements());
+        return PageResponse.of(result, OrderSummaryResponse::from);
     }
 
     @Override
@@ -43,22 +47,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public CustomOrderResponse getOrderDetailById(Long id) {
+    public OrderDetailResponse getOrderDetailById(Long id) {
         Order result = orderRepository.findById(id).orElseThrow(RuntimeException::new);
 
-        List<OrderItemDetail> orderItemDetailList = result.getOrderItems().stream()
-                .map(item -> new OrderItemDetail(item.getProductName(), item.getUnitPrice(), item.getQuantity()))
+        List<OrderItemResponse> items = result.getOrderItems().stream()
+                .map(OrderItemResponse::from)
                 .collect(Collectors.toList());
 
-        CustomOrderResponse orderResponse = new CustomOrderResponse(
+        String userEmail = userRepository.findById(result.getUserId())
+                .orElseThrow(RuntimeException::new)
+                .getEmail();
+
+        return new OrderDetailResponse(
                 result.getId(),
                 result.getPriceSum(),
                 result.getUserId(),
-                userRepository.findById(result.getUserId()).orElseThrow(RuntimeException::new).getEmail(),
-                orderItemDetailList
-        );
-
-        return orderResponse;
+                userEmail,
+                items);
     }
 
     @Override
