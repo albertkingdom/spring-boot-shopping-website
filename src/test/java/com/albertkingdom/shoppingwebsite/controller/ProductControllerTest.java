@@ -2,6 +2,7 @@ package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
+import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import com.albertkingdom.shoppingwebsite.service.CloudinaryService;
@@ -147,6 +148,33 @@ class ProductControllerTest {
 
         String expectedJsonResponse = objectMapper.writeValueAsString(ProductResponse.from(product));
         assertEquals(expectedJsonResponse, mvcResult.getResponse().getContentAsString());
+    }
+
+    @Test
+    void getProductById_returns404_whenServiceThrowsResourceNotFound() throws Exception {
+        Long id = 999L;
+        Mockito.when(productService.getProductById(id))
+                .thenThrow(new ResourceNotFoundException("product", id));
+
+        mockMvc.perform(get("/api/products/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("product not found: 999"));
+    }
+
+    @Test
+    void getProductsByPage_returns400_whenPageNegative() throws Exception {
+        mockMvc.perform(get("/api/products").param("page", "-1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[?(@.message contains 'zero')]").exists());
+    }
+
+    @Test
+    void getProductsByPage_defaultsToZero_whenPageOmitted() throws Exception {
+        Mockito.when(productService.getProductsByPage(0))
+                .thenReturn(new PageResponse<>(java.util.Collections.emptyList(), 0, 0L));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk());
     }
 
     @Test

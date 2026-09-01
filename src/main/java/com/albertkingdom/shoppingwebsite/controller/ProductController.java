@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.io.IOException;
@@ -61,7 +62,8 @@ public class ProductController {
     }
 
     @GetMapping
-    public PageResponse<ProductResponse> getProductsByPage(@RequestParam(name = "page") int page) {
+    public PageResponse<ProductResponse> getProductsByPage(
+            @RequestParam(name = "page", defaultValue = "0") @Min(value = 0, message = "page must be zero or greater.") int page) {
         return productService.getProductsByPage(page);
     }
 

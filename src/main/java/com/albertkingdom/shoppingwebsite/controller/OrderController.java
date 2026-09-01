@@ -5,15 +5,19 @@ import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.service.OrderService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import java.net.URI;
 import java.security.Principal;
+import java.util.Collections;
 
 @RestController
 @RequestMapping(path = "/api/order")
+@Validated
 public class OrderController {
 
     private final OrderService orderService;
@@ -31,9 +35,11 @@ public class OrderController {
      * be set from the request body.
      */
     @PostMapping
-    public HttpStatus saveOrder(@Valid @RequestBody CreateOrderRequest orderRequest, Principal principal) {
-        orderService.createOrder(orderRequest, principal.getName());
-        return HttpStatus.OK;
+    public ResponseEntity<?> saveOrder(@Valid @RequestBody CreateOrderRequest orderRequest, Principal principal) {
+        Long id = orderService.createOrder(orderRequest, principal.getName());
+        return ResponseEntity
+                .created(URI.create("/api/order/" + id))
+                .body(Collections.singletonMap("id", id));
     }
 
     @GetMapping("{id}")
@@ -42,13 +48,14 @@ public class OrderController {
     }
 
     @GetMapping()
-    public PageResponse<OrderSummaryResponse> getOrdersByPage(@RequestParam(name = "page") int page) {
+    public PageResponse<OrderSummaryResponse> getOrdersByPage(
+            @RequestParam(name = "page", defaultValue = "0") @Min(value = 0, message = "page must be zero or greater.") int page) {
         return orderService.getOrdersByPage(page);
     }
 
     @DeleteMapping("{id}")
     public ResponseEntity<String> deleteOrder(@PathVariable("id") Long id) {
         orderService.deleteOrder(id);
-        return new ResponseEntity<>("Order deleted successfully", HttpStatus.OK);
+        return ResponseEntity.ok("Order deleted successfully");
     }
 }

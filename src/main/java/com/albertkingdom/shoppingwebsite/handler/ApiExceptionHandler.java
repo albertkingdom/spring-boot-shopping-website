@@ -1,6 +1,7 @@
 package com.albertkingdom.shoppingwebsite.handler;
 
 import com.albertkingdom.shoppingwebsite.exception.ConflictException;
+import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
 import com.albertkingdom.shoppingwebsite.resource.FieldResource;
 import com.albertkingdom.shoppingwebsite.resource.InvalidErrorResource;
 import org.slf4j.Logger;
@@ -54,6 +55,16 @@ public class ApiExceptionHandler {
         }
         InvalidErrorResource ier = new InvalidErrorResource("Invalid parameter", fieldResources);
         return ResponseEntity.badRequest().body(ier);
+    }
+
+    /**
+     * Resource lookup miss. Returns 404 with a small JSON envelope.
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(ResourceNotFoundException e) {
+        log.debug("resource not found: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Collections.singletonMap("message", e.getMessage()));
     }
 
     /**

@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #18 合併後）
+最後更新：2026-09-01（PR #19 合併後）
 
 ## Current Baseline
 
@@ -41,6 +41,7 @@
 - [x] [PR #16](https://github.com/albertkingdom/spring-boot-shopping-website/pull/16)：訂單建立邏輯（商品查詢、快照、價格計算、user 查詢）由 `OrderController` 搬到 `OrderService.createOrder`，加 `@Transactional`；全部 controller / service / filter / SecurityConfig 改為 constructor injection；Controller 依賴 service 介面而非 `*Impl`；`ProductServiceImpl` update/delete 也加 `@Transactional`；新增 `OrderServiceImplTest.createOrder_snapshotsProductsAndSumsTotalExactly` 用 BigDecimal 驗證訂單總額精確計算；附 `docs/layered-architecture.md`。
 - [x] [PR #17](https://github.com/albertkingdom/spring-boot-shopping-website/pull/17)：加 `V4__seed_roles.sql` 建立 `ROLE_USER`/`ROLE_ADMIN`；新增 `UserService.register(RegisterRequest)` 把「建立使用者 + 加預設角色」放同一個 `@Transactional`；重複 email 拋 `ConflictException` → 409；缺 `ROLE_USER` seed 拋 `IllegalStateException`；`ApiExceptionHandler` 加 conflict handler；`docs/database-migration.md` 補「Seed data」與「Admin bootstrap」章節。
 - [x] [PR #18](https://github.com/albertkingdom/spring-boot-shopping-website/pull/18)：JWT 強化：access/refresh token 加 `type` claim + `iss` + `aud`；`JwtUtil.verify(token, TokenType)` 集中驗簽名/過期/iss/aud/type；`CustomAuthorizationFilter` 只接 access token，`/refreshToken` 只接 refresh token；外部錯誤訊息改為 opaque `"invalid access/refresh token"` 不再洩漏內部例外；新增 `JwtUtilTest` 6 個 case 覆蓋 type 互相替代、iss、aud 拒絕；`application.properties` 新增 `jwt.issuer` / `jwt.audience` env driven；附 `docs/jwt-hardening.md`。
+- [x] [PR #19](https://github.com/albertkingdom/spring-boot-shopping-website/pull/19)：新增 `ResourceNotFoundException`（→ 404）與 handler；service 內 `orElseThrow(RuntimeException::new)` 全改為丟具體例外；分頁參數加 `@Min(0)` + `defaultValue="0"` 驗證；`POST /api/order` 改回 `201 Created` + `Location` header + `{id}`；`OrderController` 標 `@Validated`；`ProductControllerTest` 加 3 個 case 覆蓋 not-found / pagination validation；附 `docs/error-handling.md`。`access_token/refresh_token` naming unification 尚未做（會影響前端契約，待另評估）。
 
 ## Next Actions
 
