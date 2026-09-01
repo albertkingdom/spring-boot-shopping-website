@@ -2,6 +2,7 @@ package com.albertkingdom.shoppingwebsite.service;
 
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.ProductResponse;
+import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import org.springframework.data.domain.Page;
@@ -40,7 +41,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getProductById(Long id) {
-        return productRepository.findById(id).orElseThrow(RuntimeException::new);
+        return productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("product", id));
     }
 
     @Override
@@ -57,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void deleteProduct(Long id) {
-        productRepository.findById(id).orElseThrow(RuntimeException::new);
+        productRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("product", id));
         productRepository.deleteById(id);
     }
 }

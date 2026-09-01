@@ -89,12 +89,12 @@
 
 ## P2：驗證、錯誤處理與 API 設計
 
-- [ ] 為訂單 items 加上 `@NotEmpty`，product id 加上 `@NotNull`，quantity 加上 `@Positive`。
-- [ ] 為分頁參數設定預設值並驗證不可小於零。
-- [ ] 建立 `ResourceNotFoundException`、`ConflictException` 等具體例外。
-- [ ] 由全域 exception handler 統一轉換成一致的錯誤 response。
-- [ ] 找不到商品、訂單或使用者時回傳 `404`，重複 email 回傳 `409`，輸入錯誤回傳 `400`。
-- [ ] 建立訂單成功時回傳 `201 Created` 與訂單 response，不將 `HttpStatus` 當作 response body。
+- [x] 為訂單 items 加上 `@NotEmpty`，product id 加上 `@NotNull`，quantity 加上 `@Positive`。
+- [x] 為分頁參數設定預設值並驗證不可小於零。
+- [x] 建立 `ResourceNotFoundException`、`ConflictException` 等具體例外。
+- [x] 由全域 exception handler 統一轉換成一致的錯誤 response。
+- [x] 找不到商品、訂單或使用者時回傳 `404`，重複 email 回傳 `409`，輸入錯誤回傳 `400`。
+- [x] 建立訂單成功時回傳 `201 Created` 與訂單 response，不將 `HttpStatus` 當作 response body。
 - [ ] 統一 API 欄位命名，例如將 `access_token`／`refresh_token` 明確決定為 snake_case 或 camelCase。
 
 ## P2：JWT 與 Spring Security

@@ -3,6 +3,7 @@ package com.albertkingdom.shoppingwebsite.service;
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderItemRequest;
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
+import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderItemResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
@@ -74,20 +75,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order getOrderById(Long id) {
-        return orderRepository.findById(id).orElseThrow(RuntimeException::new);
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("order", id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderDetailResponse getOrderDetailById(Long id) {
-        Order result = orderRepository.findById(id).orElseThrow(RuntimeException::new);
+        Order result = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("order", id));
 
         List<OrderItemResponse> items = result.getOrderItems().stream()
                 .map(OrderItemResponse::from)
                 .collect(Collectors.toList());
 
         String userEmail = userRepository.findById(result.getUserId())
-                .orElseThrow(RuntimeException::new)
+                .orElseThrow(() -> new ResourceNotFoundException("user", result.getUserId()))
                 .getEmail();
 
         return new OrderDetailResponse(
@@ -101,7 +104,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public void deleteOrder(Long id) {
-        orderRepository.findById(id).orElseThrow(RuntimeException::new);
+        if (!orderRepository.existsById(id)) {
+            throw new ResourceNotFoundException("order", id);
+        }
         orderRepository.deleteById(id);
     }
 }
