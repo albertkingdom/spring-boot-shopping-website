@@ -1,18 +1,16 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
+import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderItemRequest;
+import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
 import com.albertkingdom.shoppingwebsite.model.*;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.service.OrderServiceImpl;
 import com.albertkingdom.shoppingwebsite.service.ProductServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
@@ -29,31 +27,26 @@ public class OrderController {
     private ProductServiceImpl productServiceImpl;
 
     /*
-    create an order with request like
-    { items :
-    [
-    {productId: xx, quantity: yy},
-    {productId: xx, quantity: yy}
-    ],
-    userId: xxx,
-    totalPrice: xxx
-    }
+     * POST /api/order — request body:
+     * { "items": [ { "productId": 1, "quantity": 2 }, ... ] }
+     *
+     * userId is resolved from the authenticated principal and priceSum is
+     * always computed on the server from current product prices; neither can
+     * be set from the request body.
      */
-
-
     @PostMapping
-    public HttpStatus saveOrder(@RequestBody OrderRequest orderRequest, Principal principal) {
+    public HttpStatus saveOrder(@Valid @RequestBody CreateOrderRequest orderRequest, Principal principal) {
         Order newOrder = new Order();
-        List<OrderRequestItem> items = orderRequest.getItems();
+        List<CreateOrderItemRequest> items = orderRequest.getItems();
 
         String userEmail = principal.getName();
         BigDecimal orderTotalPrice = BigDecimal.ZERO;
-        for (OrderRequestItem i : items) {
+        for (CreateOrderItemRequest i : items) {
             Product product = productServiceImpl.getProductById(i.getProductId());
-            OrderItem orderItem = OrderItem.snapshotOf(product, i.getProductCount());
+            OrderItem orderItem = OrderItem.snapshotOf(product, i.getQuantity());
             newOrder.addOrderItem(orderItem);
 
-            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(i.getProductCount()));
+            BigDecimal lineTotal = product.getPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
             orderTotalPrice = orderTotalPrice.add(lineTotal);
         }
 
