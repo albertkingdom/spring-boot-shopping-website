@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #19 合併後）
+最後更新：2026-09-01（PR #20 合併後）
 
 ## Current Baseline
 
@@ -42,6 +42,7 @@
 - [x] [PR #17](https://github.com/albertkingdom/spring-boot-shopping-website/pull/17)：加 `V4__seed_roles.sql` 建立 `ROLE_USER`/`ROLE_ADMIN`；新增 `UserService.register(RegisterRequest)` 把「建立使用者 + 加預設角色」放同一個 `@Transactional`；重複 email 拋 `ConflictException` → 409；缺 `ROLE_USER` seed 拋 `IllegalStateException`；`ApiExceptionHandler` 加 conflict handler；`docs/database-migration.md` 補「Seed data」與「Admin bootstrap」章節。
 - [x] [PR #18](https://github.com/albertkingdom/spring-boot-shopping-website/pull/18)：JWT 強化：access/refresh token 加 `type` claim + `iss` + `aud`；`JwtUtil.verify(token, TokenType)` 集中驗簽名/過期/iss/aud/type；`CustomAuthorizationFilter` 只接 access token，`/refreshToken` 只接 refresh token；外部錯誤訊息改為 opaque `"invalid access/refresh token"` 不再洩漏內部例外；新增 `JwtUtilTest` 6 個 case 覆蓋 type 互相替代、iss、aud 拒絕；`application.properties` 新增 `jwt.issuer` / `jwt.audience` env driven；附 `docs/jwt-hardening.md`。
 - [x] [PR #19](https://github.com/albertkingdom/spring-boot-shopping-website/pull/19)：新增 `ResourceNotFoundException`（→ 404）與 handler；service 內 `orElseThrow(RuntimeException::new)` 全改為丟具體例外；分頁參數加 `@Min(0)` + `defaultValue="0"` 驗證；`POST /api/order` 改回 `201 Created` + `Location` header + `{id}`；`OrderController` 標 `@Validated`；`ProductControllerTest` 加 3 個 case 覆蓋 not-found / pagination validation；附 `docs/error-handling.md`。`access_token/refresh_token` naming unification 尚未做（會影響前端契約，待另評估）。
+- [x] [PR #20](https://github.com/albertkingdom/spring-boot-shopping-website/pull/20)：Cloudinary 上傳安全化：改用 `Files.createTempFile` 亂數命名（防路徑穿越）；magic byte + whitelist 驗證 MIME；size / 空檔驗證；`try-finally` 保證暫存檔清理；`ProductServiceImpl.updateProduct` 未上傳新圖時保留原 imgUrl/imgName；刪除 Cloudinary 圖失敗只記 `log.warn` 不 propagate（DB 已刪，孤兒圖靠 reconciliation）；`ApiExceptionHandler` 加 `IllegalArgumentException` → 400；`application.properties` 設 multipart size 上限；新 `CloudinaryServiceTest` 5 case + `docs/file-upload-safety.md`。
 
 ## Next Actions
 

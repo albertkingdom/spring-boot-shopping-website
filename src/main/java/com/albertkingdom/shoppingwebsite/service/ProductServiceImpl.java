@@ -50,8 +50,14 @@ public class ProductServiceImpl implements ProductService {
         Product existedProduct = getProductById(id);
         existedProduct.setPrice(product.getPrice());
         existedProduct.setName(product.getName());
-        existedProduct.setImgName(product.getImgName());
-        existedProduct.setImgUrl(product.getImgUrl());
+        // Nulls signal "no change" — preserve the existing image when the caller
+        // did not attach a new one, otherwise the DB row would be blanked out.
+        if (product.getImgUrl() != null) {
+            existedProduct.setImgUrl(product.getImgUrl());
+        }
+        if (product.getImgName() != null) {
+            existedProduct.setImgName(product.getImgName());
+        }
         return saveProduct(existedProduct);
     }
 
