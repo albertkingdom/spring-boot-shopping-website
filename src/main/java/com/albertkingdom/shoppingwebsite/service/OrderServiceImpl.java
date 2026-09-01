@@ -2,7 +2,6 @@ package com.albertkingdom.shoppingwebsite.service;
 
 import com.albertkingdom.shoppingwebsite.model.*;
 import com.albertkingdom.shoppingwebsite.repository.OrderRepository;
-import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,8 +17,6 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderRepository orderRepository;
-    @Autowired
-    private ProductRepository productRepository;
     @Autowired
     private UserRepository userRepository;
 
@@ -49,11 +46,9 @@ public class OrderServiceImpl implements OrderService {
     public CustomOrderResponse getOrderDetailById(Long id) {
         Order result = orderRepository.findById(id).orElseThrow(RuntimeException::new);
 
-        List<OrderItemDetail> orderItemDetailList = result.getOrderItems().stream().map(item -> {
-            Product product = productRepository.findById(item.getProductId()).orElseThrow(RuntimeException::new);
-            return new OrderItemDetail(product.getName(), product.getPrice(), item.getQuantity());
-
-        }).collect(Collectors.toList());
+        List<OrderItemDetail> orderItemDetailList = result.getOrderItems().stream()
+                .map(item -> new OrderItemDetail(item.getProductName(), item.getUnitPrice(), item.getQuantity()))
+                .collect(Collectors.toList());
 
         CustomOrderResponse orderResponse = new CustomOrderResponse(
                 result.getId(),
