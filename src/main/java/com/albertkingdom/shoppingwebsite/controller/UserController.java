@@ -45,16 +45,8 @@ public class UserController {
 
     @RequestMapping(value = "/api/register", method = RequestMethod.POST)
     public ResponseEntity<CustomResponse> register(@Valid @RequestBody RegisterRequest request) {
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(request.getPassword());
-        user.setName(request.getName());
-
-        userService.saveUser(user);
-        userService.addRoleToUser(user.getEmail(), "ROLE_USER");
-
-        CustomResponse resultResponse = new CustomResponse("register success", null);
-        return new ResponseEntity<>(resultResponse, HttpStatus.OK);
+        userService.register(request);
+        return new ResponseEntity<>(new CustomResponse("register success", null), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/api/login", method = RequestMethod.POST)

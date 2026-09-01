@@ -1,10 +1,10 @@
 package com.albertkingdom.shoppingwebsite.controller;
 
 import com.albertkingdom.shoppingwebsite.SecurityConfig;
+import com.albertkingdom.shoppingwebsite.dto.request.RegisterRequest;
 import com.albertkingdom.shoppingwebsite.dto.response.UserResponse;
 import com.albertkingdom.shoppingwebsite.filter.CustomAuthorizationFilter;
 import com.albertkingdom.shoppingwebsite.handler.ApiExceptionHandler;
-import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
 import com.albertkingdom.shoppingwebsite.service.UserServiceImpl;
 import com.albertkingdom.shoppingwebsite.util.JwtUtil;
@@ -124,7 +124,7 @@ class UserControllerSecurityTest {
         // Mass-assignment guard: a client sending "roles" alongside the allowed
         // fields must not be able to grant themselves ADMIN. RegisterRequest has
         // no roles field, so Jackson drops it and the service is invoked with a
-        // User that carries only the DTO-permitted fields.
+        // request that carries only the DTO-permitted fields.
         String body = "{\"email\":\"climber@example.com\",\"password\":\"secret1\",\"name\":\"Climber\","
                 + "\"roles\":[{\"name\":\"ROLE_ADMIN\"}]}";
 
@@ -133,15 +133,29 @@ class UserControllerSecurityTest {
                         .content(body))
                 .andExpect(status().isOk());
 
-        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
-        verify(userServiceImpl).saveUser(saved.capture());
-        assertRolesEmpty(saved.getValue());
-        verify(userServiceImpl).addRoleToUser("climber@example.com", "ROLE_USER");
+        ArgumentCaptor<RegisterRequest> captured = ArgumentCaptor.forClass(RegisterRequest.class);
+        verify(userServiceImpl).register(captured.capture());
+        RegisterRequest req = captured.getValue();
+        // RegisterRequest has only email/password/name — there is no way to
+        // carry roles through into the service. Sanity-check the three fields.
+        if (!"climber@example.com".equals(req.getEmail())
+                || !"Climber".equals(req.getName())
+                || !"secret1".equals(req.getPassword())) {
+            throw new AssertionError("register received unexpected fields: " + req.getEmail()
+                    + " / " + req.getName());
+        }
     }
 
-    private static void assertRolesEmpty(User user) {
-        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-            throw new AssertionError("expected roles to be empty on the User built from RegisterRequest, got: " + user.getRoles());
-        }
+    @Test
+    void register_returns409_whenEmailAlreadyRegistered() throws Exception {
+        org.mockito.Mockito.doThrow(new com.albertkingdom.shoppingwebsite.exception.ConflictException("email already registered"))
+                .when(userServiceImpl).register(any(RegisterRequest.class));
+
+        String body = "{\"email\":\"dup@example.com\",\"password\":\"secret1\",\"name\":\"Dup\"}";
+        mockMvc.perform(post("/api/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("email already registered"));
     }
 }
