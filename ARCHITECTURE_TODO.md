@@ -14,9 +14,9 @@
 
 ### 驗收條件
 
-- [ ] Git 追蹤的設定檔不含任何真實密碼、API key 或 JWT signing secret。
-- [ ] 一般使用者無法呼叫管理員使用者清單 API。
-- [ ] 所有使用者相關 API response 都不包含 `password` 欄位。
+- [x] Git 追蹤的設定檔不含任何真實密碼、API key 或 JWT signing secret。
+- [x] 一般使用者無法呼叫管理員使用者清單 API。
+- [x] 所有使用者相關 API response 都不包含 `password` 欄位。
 
 ## P1：帳號與初始化資料
 
@@ -28,9 +28,9 @@
 
 ### 驗收條件
 
-- [ ] 全新資料庫啟動後可以正常註冊一般使用者。
-- [ ] 註冊失敗時不會留下沒有角色的不完整帳號。
-- [ ] 管理員建立流程有文件且可在不同環境安全執行。
+- [x] 全新資料庫啟動後可以正常註冊一般使用者。
+- [x] 註冊失敗時不會留下沒有角色的不完整帳號。
+- [x] 管理員建立流程有文件且可在不同環境安全執行。
 
 ## P1：分層與交易邊界
 
@@ -39,13 +39,13 @@
 - [x] Controller 改為依賴 `OrderService`、`ProductService`、`UserService` 介面，而不是 `*ServiceImpl`。
 - [x] 全面改用 constructor injection，移除 field injection。
 - [x] 為建立訂單、更新商品、刪除訂單及其他跨多次 DB 操作的方法加入適當的 `@Transactional`。
-- [ ] 定義 Cloudinary 操作失敗時的補償策略，避免 DB 與圖片狀態不一致。
+- [x] 定義 Cloudinary 操作失敗時的補償策略，避免 DB 與圖片狀態不一致。
 
 ### 驗收條件
 
-- [ ] Controller 不直接使用 Repository。
-- [ ] Controller 不包含訂單價格計算或 Entity 組裝邏輯。
-- [ ] 跨多筆資料的操作能完整成功或完整回滾。
+- [x] Controller 不直接使用 Repository。
+- [x] Controller 不包含訂單價格計算或 Entity 組裝邏輯。
+- [x] 跨多筆資料的操作能完整成功或完整回滾。
 
 ## P1：Entity 與 API DTO 分離
 
@@ -57,22 +57,22 @@
 
 ### 驗收條件
 
-- [ ] Entity 欄位變更不會自動改變公開 API 格式。
-- [ ] API request 無法寫入 id、roles、password hash 等非預期欄位。
-- [ ] API response 不依賴 Hibernate lazy loading 才能完成序列化。
+- [x] Entity 欄位變更不會自動改變公開 API 格式。
+- [x] API request 無法寫入 id、roles、password hash 等非預期欄位。
+- [x] API response 不依賴 Hibernate lazy loading 才能完成序列化。
 
 ## P1：金額與訂單正確性
 
 - [x] 將 `Product.price`、`Order.priceSum`、DTO 金額與計算邏輯由 `Float` 改為 `BigDecimal`。
 - [x] 將資料庫金額欄位改為具有明確精度與小數位數的 `DECIMAL`。
-- [ ] 訂單總額只由後端依商品單價與數量計算，不採信前端傳入的總額。
+- [x] 訂單總額只由後端依商品單價與數量計算，不採信前端傳入的總額。
 - [x] 在 `OrderItem` 保存下單當下的商品名稱與單價快照。
-- [ ] 為金額計算、四捨五入與商品改價後的歷史訂單補上測試。
+- [x] 為金額計算、四捨五入與商品改價後的歷史訂單補上測試。
 
 ### 驗收條件
 
-- [ ] 金額計算沒有 binary floating-point 誤差。
-- [ ] 商品之後改名或改價，不會改變既有訂單內容。
+- [x] 金額計算沒有 binary floating-point 誤差。
+- [x] 商品之後改名或改價，不會改變既有訂單內容。
 
 ## P2：資料模型與查詢效能
 
@@ -123,13 +123,13 @@
 - [ ] 補上 UserService 註冊、密碼加密與角色指派測試。
 - [ ] 補上登入、JWT refresh、過期 token、錯誤角色與越權存取測試。
 - [ ] 補上建立訂單、交易回滾、商品不存在及非法數量測試。
-- [ ] Mock Cloudinary，測試上傳、更新與刪除失敗的處理。
-- [ ] 將 CI 中的 `echo "run-tests"` 改成真正執行 Maven tests。
+- [x] Mock Cloudinary，測試上傳、更新與刪除失敗的處理。
+- [x] 將 CI 中的 `echo "run-tests"` 改成真正執行 Maven tests。
 
 ## P3：專案整理與升級
 
 - [ ] 移除未使用的 import、註解程式碼與重複設定。
-- [ ] 將 package 名稱統一為小寫，例如 `exception`、`interceptor`。
+- [x] 將 package 名稱統一為小寫，例如 `exception`、`interceptor`。
 - [ ] 將設定拆為 `application-local`、`application-test`、`application-prod` profiles。
 - [x] 評估升級至仍受支援的 Java LTS、Spring Boot 與 Spring Security 版本。
 - [x] 更新 Swagger/OpenAPI、JWT、Cloudinary 與其他相依套件。
