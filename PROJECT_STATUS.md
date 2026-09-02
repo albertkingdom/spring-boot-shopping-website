@@ -2,7 +2,7 @@
 
 本文件用於跨工作階段交接目前進度。開始新工作前，先閱讀 `AGENTS.md`、本文件與 `ARCHITECTURE_TODO.md`，再以實際 Git 與 GitHub 狀態核對；外部狀態可能在本文件更新後改變。
 
-最後更新：2026-09-01（PR #21 合併後）
+最後更新：2026-09-02（PR #22 docs sync）
 
 ## Current Baseline
 
@@ -44,16 +44,40 @@
 - [x] [PR #19](https://github.com/albertkingdom/spring-boot-shopping-website/pull/19)：新增 `ResourceNotFoundException`（→ 404）與 handler；service 內 `orElseThrow(RuntimeException::new)` 全改為丟具體例外；分頁參數加 `@Min(0)` + `defaultValue="0"` 驗證；`POST /api/order` 改回 `201 Created` + `Location` header + `{id}`；`OrderController` 標 `@Validated`；`ProductControllerTest` 加 3 個 case 覆蓋 not-found / pagination validation；附 `docs/error-handling.md`。`access_token/refresh_token` naming unification 尚未做（會影響前端契約，待另評估）。
 - [x] [PR #20](https://github.com/albertkingdom/spring-boot-shopping-website/pull/20)：Cloudinary 上傳安全化：改用 `Files.createTempFile` 亂數命名（防路徑穿越）；magic byte + whitelist 驗證 MIME；size / 空檔驗證；`try-finally` 保證暫存檔清理；`ProductServiceImpl.updateProduct` 未上傳新圖時保留原 imgUrl/imgName；刪除 Cloudinary 圖失敗只記 `log.warn` 不 propagate（DB 已刪，孤兒圖靠 reconciliation）；`ApiExceptionHandler` 加 `IllegalArgumentException` → 400；`application.properties` 設 multipart size 上限；新 `CloudinaryServiceTest` 5 case + `docs/file-upload-safety.md`。
 - [x] [PR #21](https://github.com/albertkingdom/spring-boot-shopping-website/pull/21)：升級 Java 8 → 21、Spring Boot 2.6.2 → 3.3.4、Spring Security 5 → 6、Hibernate 5.6 → 6.5、Cloudinary http44 1.30 → http5 2.3、Springfox → springdoc-openapi 2.6、JWT lib 3.18 → 4.4。全域 `javax.*` → `jakarta.*`；`SecurityConfig` 由 `WebSecurityConfigurerAdapter` 改為 `SecurityFilterChain` bean（`antMatchers` → `requestMatchers`、`authorizeRequests` → `authorizeHttpRequests`）；`Dockerfile` 改 multistage `eclipse-temurin:21`；CI 改 Java 21；36/36 tests 全過。
+- [x] [PR #22](https://github.com/albertkingdom/spring-boot-shopping-website/pull/22)：把 `ARCHITECTURE_TODO.md` 各項驗收條件和實際已完成的 work item 打勾（P0/P1/P2 補上 ~13 個 checkbox），並改寫 `PROJECT_STATUS.md` Next Actions 分「高優先／中優先／部署／低優先」。
 
 ## Next Actions
 
 請由上而下處理，完成後同步更新核選框與「最後更新」日期。
 
-- [ ] 輪替所有曾提交到 Git 歷史的 MySQL 與 Cloudinary 憑證；只在本機 `.env` 或部署平台 secrets 更新，不得寫入 repository。
+### 高優先
+
+- [ ] **輪替所有曾提交到 Git 歷史的 MySQL 與 Cloudinary 憑證**；只在本機 `.env` 或部署平台 secrets 更新，不得寫入 repository。**人工作業**。
+- [ ] **建立 Testcontainers MySQL 骨架**：加入 `AbstractIntegrationTest` 基底、`ShoppingWebsiteApplicationTests.contextLoads` 改用 container、CI 移除 `services.mysql`。Java 21 已於 PR #21 解鎖此工作。
+
+### 中優先（P2 開放項目）
+
+- [ ] 補齊測試覆蓋：`UserServiceImpl.register` 單元測試、login/refresh/expired token 端到端測試、`OrderService.createOrder` 交易回滾與非法輸入測試（分別對應 `ARCHITECTURE_TODO.md` P2 測試段落）。
+- [ ] Refresh token rotation、撤銷與登出策略（`ARCHITECTURE_TODO.md` P2 JWT 段落）。
+- [ ] 為未登入、一般使用者與管理員建立完整 endpoint authorization 測試（`ARCHITECTURE_TODO.md` P2 JWT 段落，目前僅 `/api/user/all` 有覆蓋）。
+- [ ] 統一 `access_token`／`refresh_token` API 欄位命名（會影響前端契約，需先與前端協調）。
+- [ ] 資料模型效能改善：`Order.userId` → `Order -> User` 關聯、`OrderItem.productId` → `OrderItem -> Product` 關聯（保留 snapshot）、`FetchType.EAGER` → `LAZY` 或 fetch join、消除訂單明細 N+1、加 index / FK constraint（`ARCHITECTURE_TODO.md` P2 資料模型與查詢效能段落）。
+- [ ] `model/` 拆分為 `entity/` + `dto/*` 目錄，並建立集中且可測試的 Entity/DTO mapper（`ARCHITECTURE_TODO.md` P1 Entity 與 API DTO 分離段落）。
+
+### 部署 / 環境
+
 - [ ] 部署選定後，設定各環境 `APP_CORS_ALLOWED_ORIGINS`（staging / prod 各自的前端域名）。
+- [ ] 部署選定後，設定各環境 `JWT_ISSUER` / `JWT_AUDIENCE`（讓 dev token 無法對 prod 使用）。
 - [ ] 決定是否使用 `git filter-repo` 重寫歷史以清除舊密鑰；執行前必須先確認輪替完成、備份與協作者重新 clone 計畫。
 - [ ] GitHub 流程穩定後，決定是否移除 `.gitlab-ci.yml` 與 GitLab remote。
 - [ ] 選擇部署方案後，再設計 CD workflow；目前 CI 不負責部署。
+
+### 低優先（收尾）
+
+- [ ] README 補完：本機啟動、Flyway migration、seed、環境變數、admin 建立流程（Batch 9）。
+- [ ] Cloudinary 孤兒圖 reconciliation job（`docs/file-upload-safety.md` 有 recipe）。
+- [ ] 拆 `application.properties` 為 `application-local` / `application-test` / `application-prod` profiles。
+- [ ] 評估由技術分層逐步整理為模組化單體（`ARCHITECTURE_TODO.md` 尾段「建議目標結構」）。
 
 ## Security Notes
 
