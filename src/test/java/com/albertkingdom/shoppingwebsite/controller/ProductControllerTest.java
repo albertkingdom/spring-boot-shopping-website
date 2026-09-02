@@ -87,7 +87,7 @@ class ProductControllerTest {
         String expectedJsonResponse = objectMapper.writeValueAsString(expected);
 
         MvcResult mvcResult = mockMvc.perform(
-                        post("/api/products/")
+                        post("/api/products")
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .param("productName", "product")
                                 .param("productPrice", "888")
@@ -103,7 +103,7 @@ class ProductControllerTest {
     @WithMockUser(roles = "ADMIN")
     void saveProduct_shouldReturn400_whenNameOrPriceIsInValid() throws Exception {
         MvcResult mvcResult = mockMvc.perform(
-                        post("/api/products/")
+                        post("/api/products")
                                 .contentType(MediaType.MULTIPART_FORM_DATA)
                                 .param("productName", "")
                                 .param("productPrice", "888")

@@ -104,7 +104,7 @@
 - [ ] 評估 refresh token rotation、撤銷與登出策略。
 - [x] 不將內部 JWT 驗證例外訊息直接回傳給客戶端。
 - [x] 移除未使用的 `CustomAuthenticationFilter` 與舊 Session Interceptor。
-- [ ] 升級時將 `WebSecurityConfigurerAdapter` 改為 `SecurityFilterChain` 設定方式。
+- [x] 升級時將 `WebSecurityConfigurerAdapter` 改為 `SecurityFilterChain` 設定方式。
 - [ ] 為未登入、一般使用者與管理員建立完整的 endpoint authorization 測試。
 
 ## P2：檔案上傳與 Cloudinary
@@ -131,8 +131,8 @@
 - [ ] 移除未使用的 import、註解程式碼與重複設定。
 - [ ] 將 package 名稱統一為小寫，例如 `exception`、`interceptor`。
 - [ ] 將設定拆為 `application-local`、`application-test`、`application-prod` profiles。
-- [ ] 評估升級至仍受支援的 Java LTS、Spring Boot 與 Spring Security 版本。
-- [ ] 更新 Swagger/OpenAPI、JWT、Cloudinary 與其他相依套件。
+- [x] 評估升級至仍受支援的 Java LTS、Spring Boot 與 Spring Security 版本。
+- [x] 更新 Swagger/OpenAPI、JWT、Cloudinary 與其他相依套件。
 - [ ] 在 README 補充本機啟動、migration、seed、環境變數與管理員建立流程。
 
 ## 建議目標結構
