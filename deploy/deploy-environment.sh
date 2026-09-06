@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+# GitHub Actions LaunchAgents do not inherit an interactive shell PATH. Podman
+# and jq are installed by Homebrew on the Mac mini deployment runner.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:${PATH}"
+
 fail() {
   echo "Deployment failed: $*" >&2
   exit 1
