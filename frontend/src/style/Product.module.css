@@ -1,0 +1,7 @@
+.product_card {
+    height: 250px;
+    cursor: pointer;
+}
+.product_card img {
+    height: 150px;
+}

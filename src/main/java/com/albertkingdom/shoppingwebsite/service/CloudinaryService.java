@@ -32,11 +32,14 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinaryConfig;
     private final long maxUploadBytes;
+    private final String uploadFolder;
 
     public CloudinaryService(Cloudinary cloudinaryConfig,
-                             @Value("${app.upload.max-bytes:5242880}") long maxUploadBytes) {
+                             @Value("${app.upload.max-bytes:5242880}") long maxUploadBytes,
+                             @Value("${app.cloudinary.upload-folder}") String uploadFolder) {
         this.cloudinaryConfig = cloudinaryConfig;
         this.maxUploadBytes = maxUploadBytes;
+        this.uploadFolder = validateUploadFolder(uploadFolder);
     }
 
     /**
@@ -64,7 +67,7 @@ public class CloudinaryService {
             file.transferTo(tempFile.toFile());
             Map<?, ?> uploadResult = cloudinaryConfig.uploader().upload(
                     tempFile.toFile(),
-                    ObjectUtils.asMap("folder", "shopping-website"));
+                    ObjectUtils.asMap("folder", uploadFolder));
             log.debug("cloudinary upload publicId={}", uploadResult.get("public_id"));
             return new UploadedImage(
                     String.valueOf(uploadResult.get("url")),
@@ -126,5 +129,14 @@ public class CloudinaryService {
             case "image/gif":  return ".gif";
             default:           return "";
         }
+    }
+
+    private static String validateUploadFolder(String uploadFolder) {
+        if (uploadFolder == null || !uploadFolder.matches("shopping-website/(dev|staging|prod)")) {
+            throw new IllegalArgumentException(
+                    "app.cloudinary.upload-folder must be shopping-website/dev, "
+                            + "shopping-website/staging, or shopping-website/prod");
+        }
+        return uploadFolder;
     }
 }

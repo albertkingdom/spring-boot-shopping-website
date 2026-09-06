@@ -1,0 +1,48 @@
+name: Deploy production release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  actions: read
+  contents: read
+  packages: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-production:
+    name: Deploy tagged release to production
+    runs-on: [self-hosted, macOS, ARM64, shopping-deploy]
+    timeout-minutes: 20
+    environment:
+      name: production
+
+    steps:
+      - name: Check out tagged release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify annotated tag is on master
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          test "$(git cat-file -t "refs/tags/$TAG_NAME")" = tag
+          git fetch origin master --depth=1
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master
+
+      - name: Download manifest from successful master CI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./deploy/download-release-manifest.sh "$GITHUB_SHA" release/release-manifest.json
+
+      - name: Deploy production and run loopback smoke test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./deploy/deploy-environment.sh prod release/release-manifest.json

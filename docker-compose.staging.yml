@@ -1,0 +1,10 @@
+services:
+  spring:
+    image: ${SPRING_IMAGE:?SPRING_IMAGE must reference a verified staging image digest}
+    environment:
+      SPRING_PROFILES_ACTIVE: staging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE must reference a verified staging image digest}
+    ports:
+      - "127.0.0.1:${STAGING_FRONTEND_PORT:-8081}:80"

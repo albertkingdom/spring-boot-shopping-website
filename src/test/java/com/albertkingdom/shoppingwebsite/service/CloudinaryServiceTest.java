@@ -40,7 +40,8 @@ class CloudinaryServiceTest {
         result.put("public_id", "shopping-website/abc123");
         when(uploader.upload(any(File.class), any())).thenReturn(result);
 
-        CloudinaryService service = new CloudinaryService(cloudinary, 5 * 1024 * 1024);
+        CloudinaryService service = new CloudinaryService(
+                cloudinary, 5 * 1024 * 1024, "shopping-website/staging");
         MockMultipartFile file = new MockMultipartFile(
                 "productImage", "photo.png", "image/png", PNG_MAGIC_BYTES);
 
@@ -50,9 +51,11 @@ class CloudinaryServiceTest {
         assertEquals("shopping-website/abc123", uploaded.getPublicId());
 
         // The temp file we handed Cloudinary should be gone after upload.
-        ArgumentCaptor<File> captor = ArgumentCaptor.forClass(File.class);
-        verify(uploader).upload(captor.capture(), any());
-        assertFalse(captor.getValue().exists(), "temp file should be deleted after upload");
+        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        ArgumentCaptor<Map> optionsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(uploader).upload(fileCaptor.capture(), optionsCaptor.capture());
+        assertFalse(fileCaptor.getValue().exists(), "temp file should be deleted after upload");
+        assertEquals("shopping-website/staging", optionsCaptor.getValue().get("folder"));
     }
 
     @Test
@@ -63,7 +66,8 @@ class CloudinaryServiceTest {
         when(uploader.upload(any(File.class), any()))
                 .thenThrow(new IOException("network down"));
 
-        CloudinaryService service = new CloudinaryService(cloudinary, 5 * 1024 * 1024);
+        CloudinaryService service = new CloudinaryService(
+                cloudinary, 5 * 1024 * 1024, "shopping-website/staging");
         MockMultipartFile file = new MockMultipartFile(
                 "productImage", "photo.png", "image/png", PNG_MAGIC_BYTES);
 
@@ -76,7 +80,8 @@ class CloudinaryServiceTest {
 
     @Test
     void uploadImage_rejectsEmptyFile() {
-        CloudinaryService service = new CloudinaryService(mock(Cloudinary.class), 5 * 1024 * 1024);
+        CloudinaryService service = new CloudinaryService(
+                mock(Cloudinary.class), 5 * 1024 * 1024, "shopping-website/staging");
         MockMultipartFile file = new MockMultipartFile("productImage", "photo.png", "image/png", new byte[0]);
 
         assertThrows(IllegalArgumentException.class, () -> service.uploadImage(file));
@@ -84,7 +89,8 @@ class CloudinaryServiceTest {
 
     @Test
     void uploadImage_rejectsOversizedFile() {
-        CloudinaryService service = new CloudinaryService(mock(Cloudinary.class), 16); // 16 bytes cap
+        CloudinaryService service = new CloudinaryService(
+                mock(Cloudinary.class), 16, "shopping-website/staging"); // 16 bytes cap
         MockMultipartFile file = new MockMultipartFile(
                 "productImage", "photo.png", "image/png", PNG_MAGIC_BYTES);
 
@@ -93,11 +99,20 @@ class CloudinaryServiceTest {
 
     @Test
     void uploadImage_rejectsNonImageContentType() {
-        CloudinaryService service = new CloudinaryService(mock(Cloudinary.class), 5 * 1024 * 1024);
+        CloudinaryService service = new CloudinaryService(
+                mock(Cloudinary.class), 5 * 1024 * 1024, "shopping-website/staging");
         // Random bytes, no image magic; client-declared type is text.
         MockMultipartFile file = new MockMultipartFile(
                 "productImage", "notes.txt", "text/plain", "hello world".getBytes());
 
         assertThrows(IllegalArgumentException.class, () -> service.uploadImage(file));
+    }
+
+    @Test
+    void constructor_rejectsBlankUnsafeOrUnrecognizedUploadFolders() {
+        assertThrows(IllegalArgumentException.class, () -> new CloudinaryService(
+                mock(Cloudinary.class), 5 * 1024 * 1024, ""));
+        assertThrows(IllegalArgumentException.class, () -> new CloudinaryService(
+                mock(Cloudinary.class), 5 * 1024 * 1024, "shopping-website/../prod"));
     }
 }
