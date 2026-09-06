@@ -13,3 +13,15 @@ Deployed on AWS: https://reurl.cc/85DVxy
 
 - React
 - Bootstrap
+
+## 本機執行
+
+前端已整合至本 repository。完整的本機環境應從 repository 根目錄啟動：
+
+```bash
+docker compose up --build
+```
+
+此指令會啟動 MySQL、Spring Boot 與 Nginx 前端；Nginx 會將 `/api/` 請求代理至 Compose service `spring`。
+
+若只開發前端，可在本目錄直接執行 `npm start`，並先在 repository 根目錄啟動後端服務。`docker-compose-dev.yml` 和 `Dockerfile.dev` 仍可用於需要容器化 React 開發伺服器的情況。

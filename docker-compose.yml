@@ -38,7 +38,11 @@ services:
       - APACHE_PORT=8888
 
   frontend:
-    image: albertkingdomdevelop/frontend-v2
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    depends_on:
+      - spring
     ports:
       - 80:80
 
