@@ -5,7 +5,7 @@
 ## Project Scope
 
 - 本 repository 是 Spring Boot 購物網站後端；前端位於另一個 repository，不要在未獲要求時修改前端。
-- 目前技術基線為 Java 8、Spring Boot 2.6、Maven、Spring Data JPA、Spring Security、MySQL、JWT 與 Cloudinary。
+- 目前技術基線為 Java 21、Spring Boot 3.3、Maven、Spring Data JPA、Spring Security、MySQL、JWT 與 Cloudinary。
 - 一般功能修改必須維持目前 Java 與 Spring Boot 相容性；框架或 Java 升級應視為獨立 migration 工作，不得混入一般功能 PR。
 - 架構改善項目與優先順序記錄在 `ARCHITECTURE_TODO.md`。完成項目時同步更新核選框與相關文件。
 
@@ -61,6 +61,9 @@
 ## Build and Tests
 
 - 所有 Maven 指令使用 repository 內的 wrapper：`./mvnw`。
+- 若本機預設 JDK 與 `pom.xml` 要求的 Java 版本不相容，優先以對應 Java Docker image 在容器內執行 `./mvnw`；除非使用者明確授權，不為了測試安裝 JDK 或變更使用者的系統預設 Java。
+- 若 container runtime 不可用，但對應 JDK 已安裝，可在單一命令以 `JAVA_HOME` 明確指定該 JDK 執行 `./mvnw`；不得修改全域 shell 設定或系統預設 Java。
+- 容器化測試仍必須執行 `./mvnw test` 或 `./mvnw verify`；production Dockerfile 中的 `-DskipTests` build 不得視為測試驗證。
 - 修改前先確認相關測試；修改後至少執行受影響範圍的測試。
 - 提交前的完整驗證指令為：`./mvnw test`。
 - 影響啟動、JPA mapping、migration 或 Spring context 時，還應執行：`./mvnw verify`。
@@ -123,6 +126,8 @@
 - 可部署版本以 annotated tag 標記，格式為 `vMAJOR.MINOR.PATCH`。
 - 破壞相容性的 API 或資料庫變更增加 MAJOR；向下相容功能增加 MINOR；修正增加 PATCH。
 - Release tag 只能建立在已通過 CI 的 `master` commit 上。
+- 合併至 `master` 的通過 CI 版本會自動部署至 staging；建立 release tag 不得重新建置 image，production 必須部署該 tag commit 已發布的 immutable image digest。
+- production deploy 必須綁定 GitHub `production` Environment，並在 required reviewer 核准後才可執行。
 
 ## Change Safety
 

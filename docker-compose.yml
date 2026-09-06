@@ -1,50 +1,44 @@
 services:
   mysqldb:
     image: mysql:8.0
+    restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE must be set}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER must be set}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
     hostname: mysqldb
-    restart: always
-    ports:
-      - 3306:3306
     volumes:
       - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   spring:
+    image: ${SPRING_IMAGE:-shopping-website-spring:local}
     depends_on:
-      - mysqldb
-    build: .
-    restart: always
-    ports:
-      - 8080:8080
+      mysqldb:
+        condition: service_healthy
+    restart: unless-stopped
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/${MYSQL_DATABASE}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JWT_SECRET=${JWT_SECRET}
-
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: web_phpmyadmin
-    restart: always
-    ports:
-      - 8888:8888
-    environment:
-      - PMA_HOST=mysqldb
-      - APACHE_PORT=8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/${MYSQL_DATABASE:?MYSQL_DATABASE must be set}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:?MYSQL_USER must be set}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:?CLOUDINARY_CLOUD_NAME must be set}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:?CLOUDINARY_API_KEY must be set}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:?CLOUDINARY_API_SECRET must be set}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_ISSUER: ${JWT_ISSUER:?JWT_ISSUER must be set}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:?JWT_AUDIENCE must be set}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:?APP_CORS_ALLOWED_ORIGINS must be set}
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
+    image: ${FRONTEND_IMAGE:-shopping-website-frontend:local}
     depends_on:
       - spring
-    ports:
-      - 80:80
 
 volumes:
   db:

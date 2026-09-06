@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   backend:
-    name: Backend verify and image build
+    name: Backend verify and local image builds
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -44,6 +44,9 @@ jobs:
       CLOUDINARY_API_KEY: ci-placeholder
       CLOUDINARY_API_SECRET: ci-placeholder
       JWT_SECRET: ci-jwt-secret-placeholder-at-least-32-bytes
+      JWT_ISSUER: shopping-ci
+      JWT_AUDIENCE: shopping-ci-api
+      SPRING_PROFILES_ACTIVE: dev
 
     steps:
       - name: Check out repository
@@ -59,5 +62,110 @@ jobs:
       - name: Verify with Maven
         run: ./mvnw --batch-mode --no-transfer-progress verify
 
-      - name: Build Docker image
-        run: docker build --tag shopping-website:ci .
+      - name: Build backend image
+        run: docker build --tag shopping-website-backend:ci .
+
+      - name: Build frontend image
+        run: docker build --file frontend/Dockerfile.prod --tag shopping-website-frontend:ci frontend
+
+  publish-images:
+    name: Publish verified arm64 images
+    needs: backend
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up QEMU for arm64 builds
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish backend image
+        id: backend-image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64
+          tags: ghcr.io/${{ github.repository }}-spring:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build and publish frontend image
+        id: frontend-image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.prod
+          push: true
+          platforms: linux/arm64
+          tags: ghcr.io/${{ github.repository }}-frontend:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Create release manifest
+        env:
+          BACKEND_DIGEST: ${{ steps.backend-image.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.frontend-image.outputs.digest }}
+          GIT_SHA: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          mkdir -p release
+          jq -n \
+            --arg schemaVersion "1" \
+            --arg gitSha "$GIT_SHA" \
+            --arg backendImage "ghcr.io/$REPOSITORY-spring@$BACKEND_DIGEST" \
+            --arg frontendImage "ghcr.io/$REPOSITORY-frontend@$FRONTEND_DIGEST" \
+            '{schemaVersion: $schemaVersion, gitSha: $gitSha, springImage: $backendImage, frontendImage: $frontendImage}' \
+            > release/release-manifest.json
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: release/release-manifest.json
+          retention-days: 14
+
+  deploy-staging:
+    name: Deploy verified images to staging
+    needs: publish-images
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: [self-hosted, macOS, ARM64, shopping-deploy]
+    timeout-minutes: 20
+    environment:
+      name: staging
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Check out deployment configuration
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download verified release manifest
+        uses: actions/download-artifact@v4
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: release
+
+      - name: Deploy staging and run loopback smoke test
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./deploy/deploy-environment.sh staging release/release-manifest.json

@@ -1,0 +1,10 @@
+services:
+  spring:
+    image: ${SPRING_IMAGE:?SPRING_IMAGE must reference a verified production image digest}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE must reference a verified production image digest}
+    ports:
+      - "127.0.0.1:${PROD_FRONTEND_PORT:-8082}:80"
