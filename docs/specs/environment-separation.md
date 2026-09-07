@@ -2,7 +2,7 @@
 
 ## 背景與目標
 
-原本專案只有一份 root `docker-compose.yml` 與單一 named volume `db`；目前已拆出 dev、staging、prod Compose override，但尚未發布 deployment image 或建立雲端部署流程。Compose 以 `MYSQL_DATABASE` 初始化 MySQL，並在 container 內組合 Spring JDBC URL。`.env.example` 的 localhost JDBC URL 僅適用於直接在主機執行 Spring。GitHub Actions 已以 MySQL service 執行 `./mvnw verify`，但 GitLab CI 的 test job 仍是 placeholder，且目前沒有雙 image 發布、不可變 digest 或部署 promotion gate。這使本機、測試與正式環境容易共用資料庫、JWT secret 或第三方帳號，且無法在部署前取得可信的驗證結果。
+原本專案只有一份 root `docker-compose.yml` 與單一 named volume `db`；目前已拆出 dev、staging、prod Compose override，且 GitHub Actions 已發布 deployment image、以不可變 digest 建立 release manifest，並成功部署 staging。Compose 以 `MYSQL_DATABASE` 初始化 MySQL，並在 container 內組合 Spring JDBC URL。`.env.example` 的 localhost JDBC URL 僅適用於直接在主機執行 Spring。GitHub Actions 已以 MySQL service 執行 `./mvnw verify`，但 GitLab CI 的 test job 仍是 placeholder。production promotion 與 rollback 尚未實際驗證，且仍需完成 production 環境設定。這使本機、測試與正式環境容易共用資料庫、JWT secret 或第三方帳號，且無法在部署前取得可信的驗證結果。
 
 目標是建立可重複部署且互不共用資料或憑證的環境模型：本機 `dev`、部署於 Mac mini 的持久 `staging` 與 `prod`，並用 GitHub Actions 的短生命週期 MySQL 執行自動測試。Mac mini 的公開流量由 Cloudflare Tunnel 提供，不依賴固定 IP 或 router port forwarding。
 
@@ -103,7 +103,7 @@ PATH=/opt/homebrew/bin:$PATH podman compose \
 4. 在 Mac mini 建立 staging/prod 的未提交 env file，填入各自不同的 MySQL、JWT credential，並暫時填入共用 Cloudinary credential；各 environment-specific upload folder 由 profile properties 固定。部署 job 只從 release manifest 暫時注入 image digest，不把 digest 寫回 Git。
 5. 建立兩條 Cloudflare Tunnel。staging Tunnel 只能轉送至 `http://127.0.0.1:8081`，production Tunnel 只能轉送至 `http://127.0.0.1:8082`；先替 staging 設定 Cloudflare Access，再公開 production hostname。
 
-目前 staging 已建立 locally-managed `shopping-staging` Tunnel，並在 Mac mini 以使用者 LaunchAgent `com.albertkingdom.shopping-staging-tunnel` 常駐。它的 ingress 僅允許 `staging-shop.albertkingdom.com -> http://127.0.0.1:8081`，credentials 檔位於 Mac mini 的私有 `.cloudflared` 目錄。`staging-shop.albertkingdom.com` 已建立 CNAME 指向該 Tunnel，且 Cloudflare Access 的 `Shopping staging` application 已限制為 GitHub 登入、唯一允許 `albertkingdom@gmail.com` 的 policy；未登入請求會先被導向 Access。staging application image 尚未首次部署，因此登入後的 origin 目前尚無服務可回應；production Tunnel、DNS 與 Access 仍未建立。
+目前 staging 已建立 locally-managed `shopping-staging` Tunnel，並在 Mac mini 以使用者 LaunchAgent `com.albertkingdom.shopping-staging-tunnel` 常駐。它的 ingress 僅允許 `staging-shop.albertkingdom.com -> http://127.0.0.1:8081`，credentials 檔位於 Mac mini 的私有 `.cloudflared` 目錄。`staging-shop.albertkingdom.com` 已建立 CNAME 指向該 Tunnel，且 Cloudflare Access 的 `Shopping staging` application 已限制為 GitHub 登入、唯一允許 `albertkingdom@gmail.com` 的 policy；未登入請求會先被導向 Access。staging 已成功拉取 CI 發布的 image，並通過 loopback frontend 與 API smoke test；production Tunnel、DNS 與 Access 尚未建立。
 
 ### 已決定的部署觸發策略
 
@@ -178,9 +178,9 @@ No impact。API endpoint、request/response 格式、HTTP status 與授權規則
 - [ ] 在 Mac mini 建立僅供部署使用的目錄 `/Users/yklin/services/shopping-website/{staging,prod}`，權限限於部署帳號；建立彼此完全不同的 database、application user、secret 與 Cloudinary namespace。
 - [ ] 為 staging/prod 使用 Compose-managed MySQL，建立各自 named volume 的 backup/restore 操作；不得讓任何 stack 掛載另一個環境的 volume。
 - [x] 已將 root Compose 拆為 deployment-safe base 與 dev、staging、prod override：base/staging/prod 不得含 `build:` 或 phpMyAdmin，僅 dev 可 build 並公開開發 ports；三種組合均已通過 `docker compose config --quiet` 靜態驗證。
-- [ ] 為 backend/frontend 分別發布 private GHCR `linux/arm64` image，以不可變 digest 建立 release manifest，讓 staging/prod 以相同的 `SPRING_IMAGE` 與 `FRONTEND_IMAGE` digest 部署；PR 不得發布 image。
+- [x] 已為 backend/frontend 分別發布 private GHCR `linux/arm64` image，並以不可變 digest 建立 release manifest；staging 已使用 manifest 部署，production workflow 會使用同一份 digest，PR 不會發布 image。
 - [ ] 建立兩個 Cloudflare Tunnel 與公開 hostname：`staging-shop.albertkingdom.com`、`shop.albertkingdom.com`；分別以常駐 `cloudflared` service 轉送到 staging/prod 的 loopback frontend port；不設定 router port forwarding。
-- [x] 已建立並驗證 staging `shopping-staging` Tunnel 的 Mac mini connector、使用者 LaunchAgent、DNS record 與 Cloudflare Access application；Access 僅允許 GitHub 登入且 email 為 `albertkingdom@gmail.com`，未登入請求會被導向 Access。staging origin 等待第一次 CI image deploy；production Tunnel、DNS 與 Access 尚未建立。
+- [x] 已建立並驗證 staging `shopping-staging` Tunnel 的 Mac mini connector、使用者 LaunchAgent、DNS record 與 Cloudflare Access application；Access 僅允許 GitHub 登入且 email 為 `albertkingdom@gmail.com`，未登入請求會被導向 Access。staging origin 已完成第一次 CI image deploy 與 loopback smoke test；production Tunnel、DNS 與 Access 尚未建立。
 - [x] 已在 Mac mini 安裝 `shopping-deploy-mac-mini` GitHub Actions self-hosted runner（`self-hosted`、`macOS`、`ARM64`、`shopping-deploy`），並以使用者 LaunchAgent 常駐；PR job 仍只使用 GitHub-hosted runner。
 - [x] 已透過 SSH 確認 Mac mini 為 `arm64`；CI 必須發布 `linux/arm64` 或 multi-architecture backend/frontend image。
 - [x] 已將 Mac mini 的 `podman-machine-default` 調整為 6 GiB RAM，並確認既有 container 已恢復且 backend health check 為 `healthy`。
@@ -193,10 +193,11 @@ No impact。API endpoint、request/response 格式、HTTP status 與授權規則
 - [ ] 在 Mac mini 建立 production env file，必須使用與 staging 不同的 MySQL/JWT secret；Cloudinary credential 目前可暫時共用，但 production upload folder 必須維持 profile 強制隔離。
 - [ ] 停止 production 對外發布 MySQL、Spring 與 phpMyAdmin ports，改由 Nginx/HTTPS 作唯一入口。
 - [ ] 以 GitHub Actions 作為唯一正式 CI：執行 Maven test/verify、補齊 MySQL integration test、失敗阻擋 image publish 與部署；將 GitLab CI 移除或改為不具部署權限的鏡像流程。
-- [ ] 將 image tag 改為 commit SHA 或 digest，建立 staging deploy、smoke test、production promote 流程。
+- [x] 已使用不可變 image digest，建立 staging deploy、loopback smoke test 與 production promote workflow；staging 已完成實際部署驗證。
 - [x] 已決定 deployment trigger policy：合併至 `master` 後自動部署 staging；annotated release tag 觸發 production deploy，且必須通過 GitHub Environment approval。
 - [x] 已在 GitHub 建立 `staging`、`production` Environment：staging 限制 `master`；production 限制 `v*` tag、設定 required reviewer，並停用 administrator bypass。
 - [x] 已確認 GitHub Actions 預設 `GITHUB_TOKEN` 為 read/write；workflow 另明確宣告所需的最小 `contents: read`、`packages: write` 或 `packages: read` 權限。
-- [ ] 已加入 deploy workflow source：只接受 release manifest 的兩個 digest，runner 必須使用 `shopping-deploy` 標籤，且 production job 綁定 GitHub `production` Environment；待實際 staging image publish、env file 與 smoke test 就緒後才能核選完成。
-- [ ] 建立 loopback smoke test 與 manifest-based rollback workflow；不得使用浮動 tag 或刪除 volume rollback。
+- [x] 已加入 deploy workflow source：只接受 release manifest 的兩個 digest，runner 必須使用 `shopping-deploy` 標籤，production job 綁定 GitHub `production` Environment；staging image publish、env file 與 smoke test 均已就緒並通過。
+- [x] 已建立並在 staging 驗證 loopback smoke test；檢查 frontend 與 `/api/products`，不得使用浮動 tag。
+- [ ] 建立 manifest-based rollback workflow；不得刪除 volume 作為 rollback 手段。
 - [ ] 撰寫部署與 rollback 操作文件；執行 `./mvnw test`、`./mvnw verify` 與 staging smoke test 後更新本規格。
