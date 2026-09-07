@@ -24,7 +24,7 @@
 
 ## 環境與啟動方式
 
-目前 production **尚未部署**。staging 的 Mac mini runner、私密環境檔、Cloudflare Tunnel 與 Access 門禁已建立；本次變更合併至 `master` 後，GitHub Actions 會首次發布 private GHCR arm64 image 並自動部署 staging。請勿將本機 `.env` 或 Docker volume 當作正式環境。
+目前 production **尚未部署**。staging 已由 GitHub Actions 發布 private GHCR arm64 image，並在 Mac mini 自動部署及通過 loopback smoke test；其 runner、私密環境檔、Cloudflare Tunnel 與 Access 門禁均已啟用。請勿將本機 `.env` 或 Docker volume 當作正式環境。
 
 ### 目前：本機整合環境
 
