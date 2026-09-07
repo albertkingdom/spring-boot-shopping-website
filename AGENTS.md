@@ -1,10 +1,11 @@
 # Project Rules
 
-本檔案適用於整個後端 repository。除非使用者明確要求，所有修改都必須遵守以下規則。
+本檔案適用於整個 repository。除非使用者明確要求，所有修改都必須遵守以下規則。
 
 ## Project Scope
 
-- 本 repository 是 Spring Boot 購物網站後端；前端位於另一個 repository，不要在未獲要求時修改前端。
+- 本 repository 同時包含 Spring Boot 後端與 `frontend/` 前端；同一項使用者功能需要前後端配合時，應在同一個 feature branch／PR 一起修改與驗證。
+- 不因為後端工作存在就任意修改前端；只有畫面、前端 API contract、使用流程或前端測試受影響時才修改 `frontend/`。純後端或純文件工作維持最小範圍。
 - 目前技術基線為 Java 21、Spring Boot 3.3、Maven、Spring Data JPA、Spring Security、MySQL、JWT 與 Cloudinary。
 - 一般功能修改必須維持目前 Java 與 Spring Boot 相容性；框架或 Java 升級應視為獨立 migration 工作，不得混入一般功能 PR。
 - 架構改善項目與優先順序記錄在 `ARCHITECTURE_TODO.md`。完成項目時同步更新核選框與相關文件。
@@ -13,7 +14,32 @@
 
 - 規劃或實作新 feature 時，必須先使用 `$feature-spec` skill 建立或更新 spec 與可核選的 todo list。
 - 在 spec 與 todo list 足以指導並驗收實作前，不開始撰寫功能程式碼。Spec 的位置、必要內容、核選清單與更新規則以 `$feature-spec` skill 為準。
+- Spec 是功能的「需求與驗收契約」：記錄背景、目標、範圍與非目標、前後端／API／資料影響、安全與商業規則、可觀察的驗收條件與測試策略。它回答「為什麼做、要做到什麼、什麼算完成」，不是開發日誌。
+- Todo list 是同一份 spec 內的「執行清單」：將 migration、後端、前端、測試、文件與驗證拆成可依序完成的工作。只有有實作或驗證證據時才能勾選；它不得取代 spec 的產品決策或自行擴大範圍。
+- 同一 feature 同時影響前端與後端時，使用一份共同 spec 描述完整使用流程與 API contract；前端與後端 todo 可分列，但必須能共同對應同一組驗收條件。
+- 需求、API contract、資料模型、授權規則或畫面流程有實質改變時，先更新 spec 與 todo，再繼續實作。
 - 使用 `$feature-spec` 只代表建立或更新規劃文件，不代表已獲授權實作功能、commit、push 或部署。
+
+### Spec 最低內容
+
+- 新 feature 的 spec 與 todo 一律放在同一份 `docs/specs/<feature-name>.md`；不要將需求與執行清單分散到不同目錄或 issue。
+- 背景與目標：問題、受影響使用者／系統與預期成果。
+- 範圍：包含項目、明確非目標與必要假設。
+- 實作理由與指引：主要前後端元件、資料／請求流向、重要取捨，讓工程師知道如何安全實作。
+- 情境與驗收條件：以可觀察、可驗證的結果描述主要流程。
+- API 影響：endpoint、request／response、HTTP status、授權與相容性；無影響也要明寫。
+- 資料影響：model、schema migration、constraint、既有資料處理與 seed data；無影響也要明寫。
+- 商業與安全規則：角色、所有權、資料隔離、敏感資料與不可違反的規則。
+- 錯誤與邊界情況：輸入、找不到資源、衝突、越權、外部服務失敗與預期回應。
+- 測試策略：對應驗收條件的 unit、controller/security、integration、前端或端對端測試。
+
+### Todo list 最低內容
+
+- 依相依關係排序，拆成能獨立實作與驗證的小步驟。
+- 除程式碼外，須列出必要 migration、前端、測試、文件、環境設定與最終驗證。
+- 每個 todo 要能對應 spec 的範圍或驗收條件；若需求變更，先更新 spec，再調整 todo。
+- 只有完成實作且具備相應測試、部署或人工驗證證據時才能勾選；規劃、部分完成或推測不可勾選。
+- 完成後保留 spec 與全數勾選的 todo，作為行為、驗收與維護紀錄；不要直接刪除。已不需日常閱讀的舊規格可移至 `docs/specs/archive/`。
 
 ## Architecture
 
