@@ -4,15 +4,11 @@ import { Container, Row, Col, Button } from "react-bootstrap"
 
 function ProductDetailPageForCustomer({setCartCount}) {
     let { id } = useParams()
-    const [productName, setProductName] = useState("")
-    const [productPrice, setProductPrice] = useState(0)
     const [product, setProduct] = useState({})
     useEffect(() => {
         fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products/${id}`)
             .then(response => response.json())
             .then(data => {
-                // setProductName(data.name)
-                // setProductPrice(data.price)
                 setProduct(data)
             })
     }, [id])

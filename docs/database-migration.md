@@ -196,7 +196,7 @@ Column 型別跟 entity 不符。例：entity 用 `BigDecimal`，SQL 建 `FLOAT`
 
 ## Seed data
 
-`V4__seed_roles.sql` inserts the two roles the application code references:
+`V4__seed_roles.sql` inserts the two baseline roles the application code references:
 
 ```sql
 INSERT IGNORE INTO roles (name) VALUES ('ROLE_USER');
@@ -205,7 +205,9 @@ INSERT IGNORE INTO roles (name) VALUES ('ROLE_ADMIN');
 
 `INSERT IGNORE` keeps it safe against databases that were manually seeded with the same names before Flyway was introduced. `UserService.register` looks up `ROLE_USER` by name (not id), so the actual id doesn't matter.
 
-The two seed rows are the only seed the application must have to boot. Everything else (products, admin accounts) is bootstrapped separately.
+`V5__add_seller_ownership.sql` additionally creates `ROLE_SELLER` only when no row with that name already exists, then adds nullable `product.seller_id` and `order_item.seller_id` with foreign keys and indexes. The order item value is the historical seller snapshot. The nullable product column deliberately leaves pre-existing catalog items unassigned: only a platform admin may manage them, and a seller cannot claim them accidentally.
+
+These role rows are the only seed the application must have to boot. Everything else (products, admin accounts) is bootstrapped separately.
 
 ## Admin bootstrap
 

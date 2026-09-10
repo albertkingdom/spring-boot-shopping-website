@@ -3,6 +3,7 @@ package com.albertkingdom.shoppingwebsite.service;
 import com.albertkingdom.shoppingwebsite.dto.request.CreateOrderRequest;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderDetailResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.SellerOrderResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
 import com.albertkingdom.shoppingwebsite.model.Order;
 
@@ -30,4 +31,6 @@ public interface OrderService {
     OrderDetailResponse getOrderDetailById(Long id);
 
     void deleteOrder(Long id);
+    PageResponse<SellerOrderResponse> getOrdersForSeller(String sellerEmail, int page);
+    SellerOrderResponse getOrderForSeller(String sellerEmail, Long orderId);
 }

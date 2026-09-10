@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container, Table, Button } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
-import { MdDeleteOutline } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 import { updateAccessToken } from "../util/refreshTokenUtil";
 import Pagination from "./subComponents/Pagination";
 
@@ -16,11 +15,9 @@ export default function OrderListPageForSeller() {
     updateAccessToken(fetchOrder);
   }, []);
   function fetchOrder(page = 0) {
-    console.log(`start to fetch order page ${page}`);
     let accessToken = sessionStorage.getItem("access_token");
 
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/order?page=${page}`, {
-      // credentials: "include",
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/seller/orders?page=${page}`, {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
@@ -34,45 +31,6 @@ export default function OrderListPageForSeller() {
       }
       );
   }
-  function handleDelete(id) {
-    function deleteOrder() {
-      let accessToken = sessionStorage.getItem("access_token");
-
-      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/order/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-        .then((response) => response.text())
-        .then((data) => {
-          console.log(data);
-
-          //navigate("/product")
-          setOrderList(orderList.filter((order) => order.id !== id));
-        });
-    }
-    updateAccessToken(deleteOrder);
-  }
-  // function onClickNextPage(e) {
-  //   e.preventDefault();
-  //   if (currentPage + 1 === totalPage) {
-  //     return
-  //   }
-  //   fetchOrder(currentPage + 1)
-  // }
-  // function onClickPreviousPage(e) {
-  //   e.preventDefault();
-  //   if (currentPage === 0) {
-  //     return
-  //   }
-  //   fetchOrder(currentPage - 1)
-  // }
-  // function onClickPage(e, pageVisable) {
-  //   e.preventDefault();
-  //   fetchOrder(pageVisable - 1)
-  // }
   function formatDate(dateStr) {
     let dateObj = new Date(dateStr)
     let year = dateObj.getFullYear()
@@ -93,12 +51,11 @@ export default function OrderListPageForSeller() {
       <Table striped bordered hover>
         <thead>
           <tr>
-            {/* {isDeleteMode ? <td>delete</td> : null} */}
             <th>id</th>
-            <th>userId</th>
-            <th>order price</th>
+            <th>買家 Email</th>
+            <th>本店小計</th>
             <th>訂單成立時間</th>
-            <th>Edit</th>
+            <th>詳情</th>
           </tr>
         </thead>
         <tbody>
@@ -106,22 +63,15 @@ export default function OrderListPageForSeller() {
             <tr key={order.id}>
 
               <td>{order.id}</td>
-              <td>{order.userId}</td>
-              <td>{order.priceSum}</td>
+              <td>{order.buyerEmail}</td>
+              <td>{order.sellerSubtotal}</td>
               <td>{formatDate(order.createdAt)}</td>
               <td>
                 <Button
                   variant="outline-secondary"
-                  onClick={() => navigate(`/seller/editOrder/${order.id}`)}
-                  className="me-2"
+                  onClick={() => navigate(`/seller/orders/${order.id}`)}
                 >
-                  Edit
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  onClick={() => handleDelete(order.id)}
-                >
-                  <MdDeleteOutline />
+                  查看
                 </Button>
               </td>
             </tr>

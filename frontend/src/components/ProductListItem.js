@@ -1,5 +1,5 @@
-import { Button, Card, Col } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { Card, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import styles from "../style/Product.module.css";
 
 export default function ProductListItem({ product }) {
@@ -17,7 +17,6 @@ export default function ProductListItem({ product }) {
         <Card.Body>
           <Card.Title>{product.name}</Card.Title>
           <Card.Text>${product.price}</Card.Text>
-          {/* <Button variant="primary">Go somewhere</Button> */}
         </Card.Body>
       </Card>
     </Col>

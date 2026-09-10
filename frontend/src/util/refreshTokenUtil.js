@@ -14,19 +14,23 @@ export async function updateAccessToken(complete) {
         Authorization: `Bearer ${refreshToken}`,
       },
     });
+    if (!resp.ok) {
+      throw new Error("Unable to refresh access token");
+    }
     const data = await resp.json();
     let accessToken = data["access_token"];
+    if (!accessToken) {
+      throw new Error("Refresh response did not contain an access token");
+    }
     sessionStorage.setItem("access_token", accessToken);
     let decodedToken = jwt_decode(accessToken);
     const { exp } = decodedToken;
 
     sessionStorage.setItem("token_expireAt", exp * 1000);
     console.log("successfully get new access token");
-    complete()
-    return true;
+    return complete();
   } else {
     console.log("no need to get new token");
-    complete()
-    return true;
+    return complete();
   }
 }

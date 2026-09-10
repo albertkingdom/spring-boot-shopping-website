@@ -25,6 +25,9 @@ public class OrderItem {
 
     private Integer quantity;
 
+    @Column(name = "seller_id")
+    private Long sellerId;
+
     @Column(name = "product_name")
     private String productName;
 
@@ -48,6 +51,10 @@ public class OrderItem {
         OrderItem item = new OrderItem(product.getId(), quantity);
         item.productName = product.getName();
         item.unitPrice = product.getPrice();
+        // A null seller represents a platform-managed legacy product. Such a
+        // line stays visible to platform admins but is excluded from every
+        // seller-scoped order view.
+        item.sellerId = product.getSeller() == null ? null : product.getSeller().getId();
         return item;
     }
 
@@ -73,6 +80,14 @@ public class OrderItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public Long getSellerId() {
+        return sellerId;
+    }
+
+    public void setSellerId(Long sellerId) {
+        this.sellerId = sellerId;
     }
 
     public String getProductName() {

@@ -17,6 +17,10 @@ public class Product {
     private String imgUrl;
     private String imgName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id")
+    private User seller;
+
     public Product() {
     }
 
@@ -76,5 +80,13 @@ public class Product {
 
     public void setImgName(String imgName) {
         this.imgName = imgName;
+    }
+
+    public User getSeller() {
+        return seller;
+    }
+
+    public void setSeller(User seller) {
+        this.seller = seller;
     }
 }

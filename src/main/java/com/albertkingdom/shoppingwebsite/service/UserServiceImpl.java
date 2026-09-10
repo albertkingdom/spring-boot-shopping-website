@@ -6,7 +6,11 @@ import com.albertkingdom.shoppingwebsite.exception.ConflictException;
 import com.albertkingdom.shoppingwebsite.model.Role;
 import com.albertkingdom.shoppingwebsite.model.User;
 import com.albertkingdom.shoppingwebsite.repository.RoleRepository;
+import com.albertkingdom.shoppingwebsite.repository.ProductRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
+import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,11 +29,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final ProductRepository productRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, ProductRepository productRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.productRepository = productRepository;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
@@ -76,6 +83,41 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         Role role = roleRepository.findByName(roleName);
         user.getRoles().add(role);
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void grantSellerRole(Long userId, String actorEmail) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("user", userId));
+        Role sellerRole = roleRepository.findByName("ROLE_SELLER");
+        if (sellerRole == null) {
+            throw new IllegalStateException("ROLE_SELLER seed row is missing; ensure Flyway V5 has been applied.");
+        }
+        if (hasRole(user, "ROLE_SELLER")) {
+            throw new ConflictException("user is already a seller");
+        }
+        user.getRoles().add(sellerRole);
+        log.info("seller role granted actor={} targetUserId={}", actorEmail, userId);
+    }
+
+    @Override
+    @Transactional
+    public void revokeSellerRole(Long userId, String actorEmail) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("user", userId));
+        if (!hasRole(user, "ROLE_SELLER")) {
+            throw new ConflictException("user is not a seller");
+        }
+        if (productRepository.existsBySellerId(userId)) {
+            throw new ConflictException("seller role cannot be revoked while the user owns products; transfer or remove them first");
+        }
+        user.getRoles().removeIf(role -> "ROLE_SELLER".equals(role.getName()));
+        log.info("seller role revoked actor={} targetUserId={}", actorEmail, userId);
+    }
+
+    private boolean hasRole(User user, String roleName) {
+        return user.getRoles().stream().anyMatch(role -> roleName.equals(role.getName()));
     }
 
     @Override

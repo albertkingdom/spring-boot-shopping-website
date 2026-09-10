@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,6 +54,9 @@ class OrderServiceImplTest {
     void createOrder_snapshotsProductsAndSumsTotalExactly() {
         Product a = new Product(10L, "A", new BigDecimal("199.99"));
         Product b = new Product(11L, "B", new BigDecimal("0.10"));
+        User seller = new User(8L, "seller@example.com", "hash", "Seller", Collections.emptyList());
+        a.setSeller(seller);
+        b.setSeller(seller);
         when(productService.getProductById(10L)).thenReturn(a);
         when(productService.getProductById(11L)).thenReturn(b);
 
@@ -92,5 +96,29 @@ class OrderServiceImplTest {
         // 199.99 * 2 + 0.10 * 3 = 399.98 + 0.30 = 400.28, exact.
         assertEquals(new BigDecimal("400.28"), saved.getPriceSum());
         assertEquals(7L, saved.getUserId());
+    }
+
+    @Test
+    void createOrder_allowsPlatformManagedLegacyProductAndSnapshotsNullSeller() {
+        Product legacyProduct = new Product(10L, "Legacy", new BigDecimal("199.99"));
+        when(productService.getProductById(10L)).thenReturn(legacyProduct);
+        when(userRepository.findByEmail("alice@example.com"))
+                .thenReturn(new User(7L, "alice@example.com", "hash", "Alice", null));
+        Order persisted = new Order();
+        persisted.setId(42L);
+        when(orderRepository.save(any(Order.class))).thenReturn(persisted);
+
+        CreateOrderItemRequest item = new CreateOrderItemRequest();
+        item.setProductId(10L);
+        item.setQuantity(1);
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setItems(Collections.singletonList(item));
+
+        service.createOrder(request, "alice@example.com");
+
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        org.mockito.Mockito.verify(orderRepository).save(captor.capture());
+        assertEquals(null, captor.getValue().getOrderItems().get(0).getSellerId());
+        assertEquals(new BigDecimal("199.99"), captor.getValue().getPriceSum());
     }
 }

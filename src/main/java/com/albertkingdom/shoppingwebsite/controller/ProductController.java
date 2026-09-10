@@ -19,6 +19,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/products")
@@ -38,23 +39,26 @@ public class ProductController {
     public ResponseEntity<ProductResponse> saveProduct(
             @RequestParam("productName") @NotBlank String productName,
             @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
-            @RequestParam(value = "productImage", required = false) MultipartFile file
+            @RequestParam(value = "productImage", required = false) MultipartFile file,
+            Principal principal
     ) {
 
-        String imgUrl = null;
-        String imgName = null;
+        UploadedImage uploadedImage = null;
         try {
+            productService.verifyProductCreationAccess(principal.getName());
             if (file != null && !file.isEmpty()) {
-                UploadedImage uploaded = cloudinaryService.uploadImage(file);
-                imgUrl = uploaded.getUrl();
-                imgName = uploaded.getPublicId();
+                uploadedImage = cloudinaryService.uploadImage(file);
             }
-            Product newProduct = productService.saveProduct(
-                    new Product(productName, new BigDecimal(productPrice), imgUrl, imgName));
-            return ResponseEntity.ok().body(ProductResponse.from(newProduct));
+            Product newProduct = productService.createProductForActor(
+                    new Product(productName, new BigDecimal(productPrice), imageUrl(uploadedImage), imageName(uploadedImage)),
+                    principal.getName());
+            return ResponseEntity.status(HttpStatus.CREATED).body(ProductResponse.from(newProduct));
         } catch (IOException e) {
             log.error("failed to save product name={}", productName, e);
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+        } catch (RuntimeException e) {
+            compensateUploadedImage(uploadedImage, "create-product");
+            throw e;
         }
     }
 
@@ -76,34 +80,58 @@ public class ProductController {
             @RequestParam("productName") @NotBlank String productName,
             @RequestParam("productPrice") @NotBlank @Pattern(regexp = "^\\d+(\\.\\d{1,2})?$", message = "Must be a non-negative decimal with up to 2 fractional digits.") String productPrice,
             @RequestParam(value = "productImage", required = false) MultipartFile file,
+            Principal principal,
             @PathVariable("id") Long id
     ) {
 
-        String imgUrl = null;
-        String imgName = null;
+        UploadedImage uploadedImage = null;
         try {
+            productService.verifyProductManagementAccess(id, principal.getName());
             if (file != null && !file.isEmpty()) {
-                UploadedImage uploaded = cloudinaryService.uploadImage(file);
-                imgUrl = uploaded.getUrl();
-                imgName = uploaded.getPublicId();
+                uploadedImage = cloudinaryService.uploadImage(file);
             }
             // Nulls signal "no change" — updateProduct preserves the existing image
             // when the caller didn't attach a new one.
-            Product updatedProduct = productService.updateProduct(
-                    new Product(productName, new BigDecimal(productPrice), imgUrl, imgName), id);
+            Product updatedProduct = productService.updateProductForActor(
+                    new Product(productName, new BigDecimal(productPrice), imageUrl(uploadedImage), imageName(uploadedImage)),
+                    id, principal.getName());
             return ResponseEntity.ok().body(ProductResponse.from(updatedProduct));
         } catch (IOException e) {
             log.error("failed to update product id={}", id, e);
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+        } catch (RuntimeException e) {
+            compensateUploadedImage(uploadedImage, "update-product");
+            throw e;
         }
     }
 
     @DeleteMapping("{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id) throws IOException {
+    public ResponseEntity<String> deleteProduct(@PathVariable("id") Long id, Principal principal) throws IOException {
+        productService.verifyProductManagementAccess(id, principal.getName());
         Product existedProduct = productService.getProductById(id);
         String imgName = existedProduct.getImgName();
-        productService.deleteProduct(id);
+        productService.deleteProductForActor(id, principal.getName());
         cloudinaryService.deleteFile(imgName);
         return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
+    }
+
+    private String imageUrl(UploadedImage uploadedImage) {
+        return uploadedImage == null ? null : uploadedImage.getUrl();
+    }
+
+    private String imageName(UploadedImage uploadedImage) {
+        return uploadedImage == null ? null : uploadedImage.getPublicId();
+    }
+
+    private void compensateUploadedImage(UploadedImage uploadedImage, String operation) {
+        if (uploadedImage == null) {
+            return;
+        }
+        try {
+            cloudinaryService.deleteFile(uploadedImage.getPublicId());
+        } catch (Exception compensationFailure) {
+            log.warn("cloudinary compensation delete failed operation={} publicId={} exception={}",
+                    operation, uploadedImage.getPublicId(), compensationFailure.getClass().getSimpleName());
+        }
     }
 }

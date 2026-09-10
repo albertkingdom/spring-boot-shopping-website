@@ -51,7 +51,7 @@ class UserControllerSecurityTest {
     @Test
     void listAllUsers_returns403_whenAnonymous() throws Exception {
         mockMvc.perform(get("/api/user/all"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

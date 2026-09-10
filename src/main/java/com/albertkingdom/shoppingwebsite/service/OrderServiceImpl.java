@@ -7,20 +7,24 @@ import com.albertkingdom.shoppingwebsite.exception.ResourceNotFoundException;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderItemResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.OrderSummaryResponse;
 import com.albertkingdom.shoppingwebsite.dto.response.PageResponse;
+import com.albertkingdom.shoppingwebsite.dto.response.SellerOrderResponse;
 import com.albertkingdom.shoppingwebsite.model.Order;
 import com.albertkingdom.shoppingwebsite.model.OrderItem;
 import com.albertkingdom.shoppingwebsite.model.Product;
 import com.albertkingdom.shoppingwebsite.repository.OrderRepository;
 import com.albertkingdom.shoppingwebsite.repository.UserRepository;
+import com.albertkingdom.shoppingwebsite.repository.BuyerEmailProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -108,5 +112,53 @@ public class OrderServiceImpl implements OrderService {
             throw new ResourceNotFoundException("order", id);
         }
         orderRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<SellerOrderResponse> getOrdersForSeller(String sellerEmail, int page) {
+        com.albertkingdom.shoppingwebsite.model.User seller = requireSeller(sellerEmail);
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("id").descending());
+        Page<Order> orders = orderRepository.findDistinctByOrderItemsSellerId(seller.getId(), pageable);
+        Map<Long, String> buyerEmails = userRepository.findBuyerEmailsByIdIn(
+                        orders.getContent().stream().map(Order::getUserId).collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(BuyerEmailProjection::getId, BuyerEmailProjection::getEmail));
+        return PageResponse.of(orders, order -> SellerOrderResponse.from(
+                order, requireBuyerEmail(buyerEmails, order.getUserId()), seller.getId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SellerOrderResponse getOrderForSeller(String sellerEmail, Long orderId) {
+        com.albertkingdom.shoppingwebsite.model.User seller = requireSeller(sellerEmail);
+        Order order = getOrderById(orderId);
+        boolean ownsItem = order.getOrderItems().stream().anyMatch(item -> seller.getId().equals(item.getSellerId()));
+        if (!ownsItem) {
+            throw new AccessDeniedException("order does not contain this seller's products");
+        }
+        return SellerOrderResponse.from(order, buyerEmail(order), seller.getId());
+    }
+
+    private com.albertkingdom.shoppingwebsite.model.User requireSeller(String sellerEmail) {
+        com.albertkingdom.shoppingwebsite.model.User seller = userRepository.findByEmail(sellerEmail);
+        if (seller == null || seller.getRoles().stream().noneMatch(role -> "ROLE_SELLER".equals(role.getName()))) {
+            throw new AccessDeniedException("seller role is required");
+        }
+        return seller;
+    }
+
+    private String buyerEmail(Order order) {
+        return userRepository.findById(order.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("user", order.getUserId()))
+                .getEmail();
+    }
+
+    private String requireBuyerEmail(Map<Long, String> buyerEmails, Long buyerId) {
+        String buyerEmail = buyerEmails.get(buyerId);
+        if (buyerEmail == null) {
+            throw new ResourceNotFoundException("user", buyerId);
+        }
+        return buyerEmail;
     }
 }

@@ -4,9 +4,9 @@ import { Outlet } from "react-router-dom";
 
 export default function Seller() {
   return (
-    <div className={`${styles.main_content} d-flex`}>
+    <div className={`${styles.main_content} d-flex flex-column flex-md-row`}>
       <SideNav />
-      <div className="pt-3 col-10">
+      <div className="pt-3 col-md-10">
         <Outlet />
       </div>
       

@@ -1,9 +1,8 @@
 import { Navbar, Container, Badge, Nav } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { IoCartOutline, IoPersonCircleOutline } from "react-icons/io5";
-import styles from "../style/Header.module.css"
 
-export default function Header({ userInfo, cartCount }) {
+export default function Header({ userInfo, userRole, cartCount }) {
   return (
     <Navbar bg="dark" expand="lg" variant="dark">
       <Container className="d-flex align-items-center">
@@ -11,12 +10,16 @@ export default function Header({ userInfo, cartCount }) {
         <Navbar.Toggle aria-controls="responsive-navbar-nav" />
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="me-auto">
-            <Link
-              to="/seller"
-              className="text-decoration-none text-light mx-2 nav-link"
-            >
-              後台
-            </Link>
+            {userRole.includes("ROLE_SELLER") && (
+              <Link to="/seller" className="text-decoration-none text-light mx-2 nav-link">
+                商家中心
+              </Link>
+            )}
+            {userRole.includes("ROLE_ADMIN") && (
+              <Link to="/admin" className="text-decoration-none text-light mx-2 nav-link">
+                平台管理
+              </Link>
+            )}
             <Link
               to="/product_list"
               className="text-decoration-none text-light mx-2 nav-link"

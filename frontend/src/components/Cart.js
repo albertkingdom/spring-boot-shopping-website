@@ -6,7 +6,7 @@ import { updateAccessToken } from "../util/refreshTokenUtil";
 function Cart({ setCartCount }) {
   let navigate = useNavigate();
   const [cartList, setCartList] = useState([]);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [isDeleteMode] = useState(false);
   const [cartTotalPrice, setCartTotalPrice] = useState(0);
   const [show, setShow] = useState(false);
 
@@ -69,7 +69,7 @@ function Cart({ setCartCount }) {
     if (!checkIfLogin()) return;
     let orderBody = {
       items: cartList.map((item) => {
-        return { productId: item.id, productCount: item.count };
+        return { productId: item.id, quantity: item.count };
       }),
     };
 
@@ -85,7 +85,7 @@ function Cart({ setCartCount }) {
         // credentials: "include",
       })
         .then((response) => {
-          if (response.status === 200) {
+          if (response.status === 201) {
             localStorage.removeItem("shopping_cart");
             setCartCount(0);
             setCartList([])
