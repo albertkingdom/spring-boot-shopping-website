@@ -12,8 +12,8 @@
 
 ## Feature Specification and Planning
 
-- 規劃或實作新 feature 時，必須先使用 `$feature-spec` skill 建立或更新 spec 與可核選的 todo list。
-- 在 spec 與 todo list 足以指導並驗收實作前，不開始撰寫功能程式碼。Spec 的位置、必要內容、核選清單與更新規則以 `$feature-spec` skill 為準。
+- 規劃或實作新 feature 時，必須先使用 `$feature-spec` skill 建立或更新 spec 與可核選的 todo list；若當前 session 無法載入該 skill，使用 `.codex/skills/project-sdd-workflow/` 的規則與範本完成等價內容。
+- 在 spec 與 todo list 足以指導並驗收實作前，不開始撰寫功能程式碼。Spec 的位置、必要內容、核選清單與更新規則以 `$feature-spec` skill 或 project-local fallback 為準。
 - Spec 是功能的「需求與驗收契約」：記錄背景、目標、範圍與非目標、前後端／API／資料影響、安全與商業規則、可觀察的驗收條件與測試策略。它回答「為什麼做、要做到什麼、什麼算完成」，不是開發日誌。
 - Todo list 是同一份 spec 內的「執行清單」：將 migration、後端、前端、測試、文件與驗證拆成可依序完成的工作。只有有實作或驗證證據時才能勾選；它不得取代 spec 的產品決策或自行擴大範圍。
 - 同一 feature 同時影響前端與後端時，使用一份共同 spec 描述完整使用流程與 API contract；前端與後端 todo 可分列，但必須能共同對應同一組驗收條件。
@@ -27,6 +27,7 @@
 - 範圍：包含項目、明確非目標與必要假設。
 - 實作理由與指引：主要前後端元件、資料／請求流向、重要取捨，讓工程師知道如何安全實作。
 - 情境與驗收條件：以可觀察、可驗證的結果描述主要流程。
+- 新建或實質更新 spec 時，驗收條件使用 `AC-*`、情境使用 `SCN-*` 標記，並能對應到 todo 與測試／人工驗證證據。
 - API 影響：endpoint、request／response、HTTP status、授權與相容性；無影響也要明寫。
 - 資料影響：model、schema migration、constraint、既有資料處理與 seed data；無影響也要明寫。
 - 商業與安全規則：角色、所有權、資料隔離、敏感資料與不可違反的規則。
@@ -40,6 +41,17 @@
 - 每個 todo 要能對應 spec 的範圍或驗收條件；若需求變更，先更新 spec，再調整 todo。
 - 只有完成實作且具備相應測試、部署或人工驗證證據時才能勾選；規劃、部分完成或推測不可勾選。
 - 完成後保留 spec 與全數勾選的 todo，作為行為、驗收與維護紀錄；不要直接刪除。已不需日常閱讀的舊規格可移至 `docs/specs/archive/`。
+
+## Spec-Driven Development Workflow
+
+本 repository 採用參考 Spectra 3.x／OpenSpec 的規格驅動流程；詳細操作規範維護在 project-local skill：`.codex/skills/project-sdd-workflow/SKILL.md`。
+
+- 處理新 feature、需求變更、實作、驗收或歸檔前，先讀取並遵守該 skill。
+- 流程階段為 `Discuss → Propose → Pre-implementation review → Apply → Ingest → Verify → Review → Archive`。
+- Spec 建立或更新時，使用該 skill 的 `references/feature-spec-template.md`；範本是結構指引，仍須依功能實際需求補齊內容。
+- `Verify` 負責執行測試與記錄驗收證據；`Review` 只產生 findings，不修改、stage 或 commit 檔案。`analyze`、`audit`、`drift` 僅在需求或風險相關時使用。
+- 即使沒有安裝 Spectra CLI 或對應 skill，也必須依該文件手動完成流程；工具名稱不代表已授權 commit、push、部署或其他外部操作。
+- `AGENTS.md` 的安全、架構、測試與 Git 規則優先於 project-local skill；兩者衝突時以 `AGENTS.md` 為準。
 
 ## Architecture
 
@@ -165,11 +177,12 @@
 
 ## Definition of Done
 
-- [ ] 新 feature 已依 `$feature-spec` skill 在實作前建立 spec 與 todo list，並已更新為最終行為與完成狀態。
+- [ ] 新 feature 已依 `$feature-spec` skill 在實作前建立 spec 與 todo list，並已更新為最終行為、驗收條件與完成狀態。
+- [ ] 每個驗收條件都有通過的測試或人工驗證證據，必要的 staging 驗收結果已記錄在 spec 或對應 todo。
 - [ ] 實作符合本檔案的分層、安全與資料規則。
 - [ ] 受影響測試已新增或更新且通過。
 - [ ] `./mvnw test` 通過；需要時 `./mvnw verify` 也通過。
 - [ ] 沒有新增 secret、敏感 log 或不必要的公開欄位。
 - [ ] API、migration、環境變數與操作方式的文件已同步。
-- [ ] `ARCHITECTURE_TODO.md` 中對應項目已更新。
+- [ ] 若本次工作完成或變更 `ARCHITECTURE_TODO.md` 中的對應架構項目，已同步更新核選框與相關文件；若無對應項目則不需更新。
 - [ ] Git diff 僅包含本次工作的相關變更。
