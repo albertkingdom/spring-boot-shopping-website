@@ -4,7 +4,15 @@ import ProductPageForSeller from "./ProductPageForSeller";
 
 describe("ProductPageForSeller", () => {
   const page = (content, totalPages) => ({ ok: true, json: async () => ({ content, totalPages }) });
-  const product = (id, name) => ({ id, name, price: 10 });
+  const product = (id, name, imgUrl = null) => ({ id, name, price: 10, imgUrl });
+
+  beforeEach(() => {
+    jest.spyOn(window, "confirm").mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    window.confirm.mockRestore();
+  });
 
   test("refreshes before paging and keeps existing products when the next page fails", async () => {
     const refreshAccessToken = jest.fn((callback) => callback());
@@ -125,5 +133,35 @@ describe("ProductPageForSeller", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
     expect(screen.getByLabelText("Next").closest("li")).toHaveClass("disabled");
+    expect(screen.getByRole("status")).toHaveTextContent("目前沒有商品");
+    expect(screen.getByRole("button", { name: "新增第一項商品" })).toBeInTheDocument();
+  });
+
+  test("renders the product image in the seller list", async () => {
+    const refreshAccessToken = jest.fn((callback) => callback());
+    global.fetch = jest.fn().mockResolvedValueOnce(
+      page([product(1, "My product", "https://cdn.example.test/product.jpg")], 1)
+    );
+
+    render(<MemoryRouter><ProductPageForSeller refreshAccessToken={refreshAccessToken} /></MemoryRouter>);
+
+    expect(await screen.findByAltText("My product 商品圖片")).toHaveAttribute(
+      "src",
+      "https://cdn.example.test/product.jpg"
+    );
+  });
+
+  test("does not delete when the confirmation is cancelled", async () => {
+    window.confirm.mockReturnValue(false);
+    const refreshAccessToken = jest.fn((callback) => callback());
+    global.fetch = jest.fn().mockResolvedValueOnce(page([product(1, "My product")], 1));
+
+    render(<MemoryRouter><ProductPageForSeller refreshAccessToken={refreshAccessToken} /></MemoryRouter>);
+    expect(await screen.findByText("My product")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "刪除商品 My product" }));
+
+    expect(window.confirm).toHaveBeenCalledWith("確定要刪除商品「My product」嗎？");
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

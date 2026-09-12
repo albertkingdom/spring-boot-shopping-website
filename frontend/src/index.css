@@ -1,3 +1,83 @@
+:root {
+  color-scheme: light;
+  --app-background: #f5f6f8;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f8f9fb;
+  --app-text: #25303b;
+  --app-muted: #687481;
+  --app-border: #d8dde3;
+  --app-primary: #285f91;
+  --app-danger: #a8444c;
+  --app-success: #35745f;
+  --app-focus: #5b8fc2;
+  --app-header-background: #25303b;
+  --app-header-text: #f4f7fa;
+  --app-header-border: #4a5968;
+  --app-header-hover: #344657;
+  --app-header-badge: #d8e0e8;
+  --app-header-badge-text: #25303b;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-background: #11151b;
+  --app-surface: #1a1e25;
+  --app-surface-soft: #20252d;
+  --app-text: #e7ebf0;
+  --app-muted: #aeb8c3;
+  --app-border: #343c46;
+  --app-primary: #8db9e5;
+  --app-danger: #ee9da3;
+  --app-success: #9bd1bc;
+  --app-focus: #a7c9ec;
+  --app-header-background: #0d1117;
+  --app-header-text: #e7ebf0;
+  --app-header-border: #3c4652;
+  --app-header-hover: #202b37;
+  --app-header-badge: #33404d;
+  --app-header-badge-text: #e7ebf0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --app-background: #11151b;
+    --app-surface: #1a1e25;
+    --app-surface-soft: #20252d;
+    --app-text: #e7ebf0;
+    --app-muted: #aeb8c3;
+    --app-border: #343c46;
+    --app-primary: #8db9e5;
+    --app-danger: #ee9da3;
+    --app-success: #9bd1bc;
+    --app-focus: #a7c9ec;
+    --app-header-background: #0d1117;
+    --app-header-text: #e7ebf0;
+    --app-header-border: #3c4652;
+    --app-header-hover: #202b37;
+    --app-header-badge: #33404d;
+    --app-header-badge-text: #e7ebf0;
+  }
+}
+
+:root {
+  --bs-body-bg: var(--app-background);
+  --bs-body-color: var(--app-text);
+  --bs-secondary-color: var(--app-muted);
+  --bs-tertiary-bg: var(--app-surface-soft);
+  --bs-border-color: var(--app-border);
+  --bs-heading-color: var(--app-text);
+  --bs-card-bg: var(--app-surface);
+  --bs-card-color: var(--app-text);
+  --bs-table-bg: var(--app-surface);
+  --bs-table-color: var(--app-text);
+  --bs-table-border-color: var(--app-border);
+  --bs-table-striped-color: var(--app-text);
+  --bs-table-striped-bg: var(--app-surface-soft);
+  --bs-table-hover-color: var(--app-text);
+  --bs-table-hover-bg: var(--app-surface-soft);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,6 +85,43 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--app-text);
+  background: var(--app-background);
+}
+
+.card,
+.modal-content,
+.list-group-item,
+.dropdown-menu {
+  color: var(--app-text);
+  background-color: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.form-control,
+.form-select {
+  color: var(--app-text);
+  background-color: var(--app-surface);
+  border-color: var(--app-border);
+}
+
+.form-control::placeholder {
+  color: var(--app-muted);
+}
+
+.table {
+  color: var(--app-text);
+  border-color: var(--app-border);
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  color: var(--app-text);
+  background-color: var(--app-surface-soft);
+}
+
+.table-hover > tbody > tr:hover > * {
+  color: var(--app-text);
+  background-color: var(--app-surface-soft);
 }
 
 code {

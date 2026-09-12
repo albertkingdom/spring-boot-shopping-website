@@ -70,6 +70,11 @@ function ProductPageForSeller({ refreshAccessToken = updateAccessToken }) {
         : "無法刪除商品，請稍後再試。");
     }
   }
+  function requestDelete(product) {
+    if (window.confirm(`確定要刪除商品「${product.name}」嗎？`)) {
+      handleDelete(product.id);
+    }
+  }
   return (
     <Container>
       {error && <Alert variant="danger">{error}</Alert>}
@@ -81,7 +86,7 @@ function ProductPageForSeller({ refreshAccessToken = updateAccessToken }) {
           className="m-2"
           onClick={() => navigate("/seller/createProduct")}
         >
-          Create
+          新增商品
         </Button>
         {/* <Button
           size="sm"
@@ -96,52 +101,68 @@ function ProductPageForSeller({ refreshAccessToken = updateAccessToken }) {
         currentPage={currentPage}
         fetch={loadProducts} />
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            {/* {isDeleteMode ? <th>Delete</th> : null} */}
-            <th>id</th>
-            <th>name</th>
-            <th>price</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {productList.map((product) => (
-            <tr key={product.id}>
-              {/* {isDeleteMode ? (
-                <td>
-                  <Button
-                    variant="light"
-                    onClick={() => handleDelete(product.id)}
-                  >
-                    <MdDeleteOutline />
-                  </Button>
-                </td>
-              ) : null} */}
-              <td>{product.id}</td>
-              <td>{product.name}</td>
-              <td>{product.price}</td>
-              <td>
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => navigate(`/seller/editProduct/${product.id}`)}
-                  className="me-2"
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  onClick={() => handleDelete(product.id)}
-                  aria-label={`刪除商品 ${product.name}`}
-                >
-                  <MdDeleteOutline />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      {productList.length === 0 && error ? null : productList.length === 0 ? (
+        <Alert variant="info" role="status">
+          <Alert.Heading>目前沒有商品</Alert.Heading>
+          <p>建立第一項商品後，會在這裡查看圖片、價格與庫存相關操作。</p>
+          <Button variant="primary" onClick={() => navigate("/seller/createProduct")}>
+            新增第一項商品
+          </Button>
+        </Alert>
+      ) : (
+        <div className="table-responsive">
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>圖片</th>
+                <th>id</th>
+                <th>商品名稱</th>
+                <th>價格</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {productList.map((product) => (
+                <tr key={product.id}>
+                  <td>
+                    {product.imgUrl ? (
+                      <img
+                        src={product.imgUrl}
+                        alt={`${product.name} 商品圖片`}
+                        loading="lazy"
+                        width="64"
+                        height="64"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : (
+                      <span>無圖片</span>
+                    )}
+                  </td>
+                  <td>{product.id}</td>
+                  <td>{product.name}</td>
+                  <td>{product.price}</td>
+                  <td>
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => navigate(`/seller/editProduct/${product.id}`)}
+                      className="me-2"
+                    >
+                      編輯
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      onClick={() => requestDelete(product)}
+                      aria-label={`刪除商品 ${product.name}`}
+                    >
+                      <MdDeleteOutline />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      )}
     </Container>
   );
 }

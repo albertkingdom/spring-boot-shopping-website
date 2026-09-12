@@ -22,6 +22,7 @@ import { useState } from "react";
 import RouteNeedAdmin from "./components/RouteNeedAdmin";
 import RouteNeedSeller from "./components/RouteNeedSeller";
 import jwt_decode from "jwt-decode";
+import { ThemeProvider } from "./components/ThemeContext";
 
 function App() {
   const [userInfo, setUserInfo] = useState(() => sessionStorage.getItem("shopping-website-user"));
@@ -48,16 +49,17 @@ function App() {
     setCartCount(value);
   }
   return (
-    <Router>
-      <Header userInfo={userInfo} userRole={userRole} cartCount={cartCount} />
+    <ThemeProvider>
+      <Router>
+        <Header userInfo={userInfo} userRole={userRole} cartCount={cartCount} />
 
-      <Routes>
+        <Routes>
         <Route path="/" element={<Navigate to="/product_list" replace />} />
         <Route
           path="/seller"
           element={
             <RouteNeedSeller redirectTo="/login" userName={userInfo} userRole={userRole}>
-              <Seller />
+              <Seller userRole={userRole} />
             </RouteNeedSeller>
           }
         >
@@ -79,7 +81,7 @@ function App() {
           path="/admin"
           element={
             <RouteNeedAdmin redirectTo="/login" userName={userInfo} userRole={userRole}>
-              <Admin />
+              <Admin userRole={userRole} />
             </RouteNeedAdmin>
           }
         >
@@ -104,8 +106,9 @@ function App() {
           path="/login"
           element={<Login userName={userInfo} setUser={configuretUserInfo} setRole={configureUserRole}/>}
         />
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

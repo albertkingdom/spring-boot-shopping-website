@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class SellerMigrationUpgradeIntegrationTest {
 
@@ -49,6 +50,27 @@ class SellerMigrationUpgradeIntegrationTest {
                         + "WHERE constraint_schema = DATABASE() AND table_name = 'order_item' "
                         + "AND column_name = 'seller_id' AND referenced_table_name = 'users'",
                 Integer.class));
+    }
+
+    @Test
+    void v6BackfillsExistingOrderTimestampsAndAddsNotNullDefault() {
+        flyway("5").migrate();
+
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(new DriverManagerDataSource(url, username, password));
+        jdbcTemplate.update("INSERT INTO orders (created_at) VALUES (NULL)");
+
+        flyway(null).migrate();
+
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM orders WHERE created_at IS NULL", Integer.class));
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'orders' "
+                        + "AND column_name = 'created_at' AND is_nullable = 'NO'", Integer.class));
+        assertNotNull(jdbcTemplate.queryForObject(
+                "SELECT column_default FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'orders' "
+                        + "AND column_name = 'created_at'", String.class));
     }
 
     private Flyway flyway(String targetVersion) {

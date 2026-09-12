@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 class SellerMigrationIntegrationTest {
@@ -41,5 +42,20 @@ class SellerMigrationIntegrationTest {
         assertEquals(1, sellerForeignKeyCount);
         assertEquals(1, orderItemSellerIndexCount);
         assertEquals(1, orderItemSellerForeignKeyCount);
+    }
+
+    @Test
+    void v6InitializesOrderCreatedAtAndAddsDatabaseDefault() {
+        Integer nullable = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'orders' "
+                        + "AND column_name = 'created_at' AND is_nullable = 'NO'", Integer.class);
+        String defaultValue = jdbcTemplate.queryForObject(
+                "SELECT column_default FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'orders' "
+                        + "AND column_name = 'created_at'", String.class);
+
+        assertEquals(1, nullable);
+        assertNotNull(defaultValue);
     }
 }

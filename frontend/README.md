@@ -2,12 +2,15 @@
 
 Deployed on AWS: https://reurl.cc/85DVxy
 
-## 使用者帳密
+## 本機測試帳號
 
-|          | 前台 user       | 後台 admin      |
-| -------- | --------------- | --------------- |
-| id       | test6@gmail.com | admin@gmail.com |
-| password | test666         | myadmin         |
+本 repository 不再保證固定的前台或後台測試帳號；舊版文件中的
+`test6@gmail.com`、`admin@gmail.com` 與對應密碼已移除，避免把過期或可預測的
+credential 當成目前環境的登入方式。
+
+請依 repository 根目錄的 `.env.example`、目前使用的 dev fixture 或團隊提供的
+本機測試資料建立／取得 disposable 帳號。密碼與 password hash 不得寫入 README、
+版本庫或其他可提交的設定檔。
 
 ## 技術
 

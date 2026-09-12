@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,8 +22,8 @@ public class Order {
     @Column(name = "price_sum", precision = 10, scale = 2)
     private BigDecimal priceSum;
     private Long userId;
-    @Column(name="created_at", insertable = false)
-    private Timestamp createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Timestamp createdAt = Timestamp.from(Instant.now());
 
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)

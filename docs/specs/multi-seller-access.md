@@ -470,7 +470,7 @@
 
 ## UI/UX redesign Todo（2026-09-12）
 
-- [ ] 建立共用後台 shell、header 工作空間切換、breadcrumb、scope 提示與一致的 responsive layout，並讓 admin／seller 側欄由同一份 module registry 產生；涵蓋 `AC-UI-001`／`AC-UI-005`／`AC-UI-007`。
+- [x] 建立第一段共用後台 shell、header workspace／theme controls、breadcrumb、scope 提示與一致的 responsive layout，並讓 admin／seller 側欄由同一份 module registry 產生；涵蓋 `AC-UI-001`／`AC-UI-005`／`AC-UI-007`。完整頁面流程仍待後續段落完成。
 - [ ] 將視覺調整為中性、緊湊、以列表操作為主的商務後台，移除裝飾性 dashboard 卡片與 AI 式文案；涵蓋 `AC-UI-006`／`SCN-UI-012`。
 - [ ] 重整 admin 概覽、商家權限、全站商品與全站訂單的資訊架構與操作確認；涵蓋 `AC-UI-001`／`AC-UI-002`／`AC-UI-005`。
 - [ ] 重整 seller 概覽、我的商品與我的訂單流程；保留 owner／seller-scoped API contract，不新增 `sellerId` 欄位；涵蓋 `AC-UI-003`／`AC-UI-004`。
@@ -478,22 +478,62 @@
 - [ ] 補 React Testing Library 與必要的 route／manual validation，逐項填寫 Verification and Acceptance 的實際證據；涵蓋 `SCN-UI-001`–`SCN-UI-011`。
 - [ ] 在窄螢幕與鍵盤操作下完成人工驗收，確認主要查詢、授權與商品／訂單操作不被裁切；涵蓋 `AC-UI-005`／`SCN-UI-011`。
 - [ ] 建立後續模組的 extension checklist：module key、workspace／role／scope、route／breadcrumb、導覽群組／排序、API／資料影響、各狀態與 responsive 操作；涵蓋 `AC-UI-007`／`SCN-UI-013`／`SCN-UI-014`。
-- [ ] 建立共用主題 token 與 header theme selector，支援 system／light／dark，並讓 shell、module registry 頁面與狀態元件共用；涵蓋 `AC-UI-008`／`SCN-UI-015`。
+- [x] 建立共用主題 token 與 header theme selector，支援 system／light／dark，並先套用到共用 shell 與 module registry 導覽；既有資源頁面的狀態元件全面套用、contrast 與瀏覽器偏好人工驗收仍待後續完成。
 - [ ] 補主題 preference persistence、system preference change 與 local preference 失敗 fallback 測試；涵蓋 `SCN-UI-016`。
 - [ ] 在淺色／深色主題下完成 keyboard、responsive 與 contrast manual／automated smoke check，將實際證據填入驗收對照表；涵蓋 `AC-UI-008`。
+
+## 第一段實作進度（2026-09-12）
+
+- [x] 新增共用 `BackofficeShell`、module registry、admin／seller 導覽群組、active state、breadcrumb、scope 提示與窄螢幕版面。
+- [x] 新增 `ThemeProvider` 與 header icon theme menu，支援 system／light／dark、local preference 與 storage 失敗 fallback；窄螢幕以緊湊按鈕開啟文字選單。
+- [x] 補上 module registry、shell、theme context 與 App header component tests。
+- [x] `frontend/npm test -- --watchAll=false`：9 suites、28 tests passed。
+- [x] `frontend/npm run build`：production build compiled；僅保留既有頁面的 React Hook dependency warnings；同時補上 Bootstrap surface／text theme token，避免深色主題商品卡片低對比。
+- [x] 補上 Bootstrap table striped／hover 的文字與背景 theme token，避免深色主題偶數列 hover 時商品名稱對比不足；深色全站商品頁 smoke check 通過。
+- [x] 以 Chrome 實際操作 `localhost:3001`：主題 selector 可切換淺色／深色、公開商品卡片在深色下可讀、375px 窄螢幕可收合／展開 header 導覽、未登入進入 `/admin` 會導向 `/login`。
+- [x] 以 Chrome 嘗試文件中的 admin／user 帳號；兩組帳號均已失效，已更新 `frontend/README.md` 移除過時固定 credential，並在本機 feature preview test DB 建立 disposable admin fixture（帳號與密碼不提交到 repository）完成後台人工驗證。
+- [x] Chrome admin smoke：登入後驗證 `/admin` 平台管理 scope、工作台／營運／管理三組側欄、active state、breadcrumb，以及全站商品、全站訂單、商家權限三個模組的 route 與資料載入。
+- [x] Chrome admin responsive smoke：375px 下後台導覽分組仍可操作，header toggle icon 具備足夠對比、可展開工作空間／主題／帳號控制，長帳號以單行省略呈現，且沒有水平捲動；淺色主題在 `/admin/sellers` reload 後仍保留。
+- [ ] 尚未完成商品／訂單頁面全面套用新 shell、所有流程的人工驗收，以及完整 contrast／RWD／鍵盤驗收。
+
+## 本次驗收結果（2026-09-12）
+
+### 已通過
+
+- [x] Backend Java 21 + MySQL acceptance suite：`docker-compose.test.yml` 執行 85 tests，0 failures、0 errors；Flyway V5/V6 migration 與 seller security／scope integration tests 通過。
+- [x] Frontend acceptance suite：9 suites、28 tests passed。
+- [x] 純 admin 登入後顯示平台管理與全站商品／訂單／商家權限入口；純 seller 登入後只顯示商家中心與本店商品／訂單入口，直接進入 `/admin` 會顯示無權限訊息。
+- [x] 以 seller A 建立商品、以 seller B 建立另一商品；資料庫確認 owner 分別為目前登入者，表單未提供 `sellerId`。
+- [x] 一般 buyer 從公開商品頁加入兩個不同 seller 的商品並成功建立跨商家訂單；admin 可看到訂單總額 `358.01` 與兩個 item。
+- [x] 同一筆跨商家訂單由 seller A 查看時只顯示本店 item／小計 `123.45`，seller B 只顯示本店 item／小計 `234.56`，未顯示其他 seller item 或整單總額。
+- [x] 嘗試撤銷仍擁有商品的既有 seller，後端回傳 `409`，seller 狀態保留，畫面顯示阻擋原因。
+- [x] Chrome 驗證後台深色／淺色切換、訂單詳情資料不變，以及手動選擇淺色重新載入後仍保留；驗收結束後恢復深色。
+- [x] 角色變更現在會先顯示確認對話框；撤銷商品持有者收到 `409` 時，畫面保留原狀態並提供「前往全站商品」入口。
+- [x] 商家商品列表新增圖片欄位與無圖片 fallback；商品清單為空時顯示下一步 CTA。
+- [x] 商家刪除商品前新增確認，取消不會送出 DELETE；刪除失敗仍保留原列表並顯示錯誤。
+- [x] 商家訂單列表新增空狀態與下一步 CTA；`created_at` 由 V6 migration 回填既有 NULL、設為 NOT NULL 並提供資料庫 default，新訂單 API 不再產生 NULL 時間。
+- [x] Chrome 驗證 seller 商品頁的圖片欄位與訂單時間，訂單 #2／#3 顯示實際建立時間，不再顯示 1970 日期。
+- [x] 本次驗收重跑：Frontend `npm test -- --watchAll=false` 為 9 suites、28 tests passed；Chrome seller 訂單詳情只顯示 seller A item／小計 `123.45`，admin 訂單 #3 顯示兩個 item／總額 `358.01`。
+- [x] 本次驗收重跑：Chrome 驗證角色變更確認對話框、淺色主題 reload persistence，並於結束時恢復深色主題。
+- [x] 本次補充驗收：臨時授予 disposable admin fixture `ROLE_SELLER` 後，重新登入可切換 seller／admin workspace；驗收結束已撤銷該角色並重新登入恢復純 admin session。
+- [x] 本次補充驗收：seller 直接進入 `/admin` 顯示無權限；主題選單可用鍵盤 Enter 開啟、Escape 關閉；local preference 讀取／寫入失敗仍可維持 system／目前頁面主題切換。
+
+### 未通過或仍需修正
+
+- [ ] 完整 keyboard、system preference change、商品圖片實際上傳／Cloudinary failure 與完整 401／外部錯誤流程尚未完成簽核；403、409、刪除失敗與 local preference fallback 已驗證。
 
 ## UI/UX redesign 驗收對照
 
 | Acceptance | Scenario | 測試／驗證方式 | Result | Evidence |
 |---|---|---|---|---|
-| `AC-UI-001` | `SCN-UI-001`、`SCN-UI-002`、`SCN-UI-003` | route／navigation component test | pending | 待補測試檔與結果 |
-| `AC-UI-002` | `SCN-UI-004`、`SCN-UI-005` | seller role management component test + API mock | pending | 待補測試檔與結果 |
-| `AC-UI-003` | `SCN-UI-006`、`SCN-UI-007` | product page component test + manual upload/delete check | pending | 待補測試檔與結果 |
-| `AC-UI-004` | `SCN-UI-008`、`SCN-UI-009` | seller/admin order component test + response field assertion | pending | 待補測試檔與結果 |
-| `AC-UI-005` | `SCN-UI-010`、`SCN-UI-011` | responsive manual check + accessibility-oriented component test | pending | 待補測試檔與結果 |
-| `AC-UI-006` | `SCN-UI-012` | visual review + compact resource-list usability check | pending | 待補驗收結果 |
-| `AC-UI-007` | `SCN-UI-013`、`SCN-UI-014` | module registry contract test + route/role filtering + responsive navigation check | pending | 待補測試檔與結果 |
-| `AC-UI-008` | `SCN-UI-015`、`SCN-UI-016` | theme selector component test + preference fallback + light/dark contrast smoke check | pending | 待補測試檔與結果 |
+| `AC-UI-001` | `SCN-UI-001`、`SCN-UI-002`、`SCN-UI-003` | route／navigation component test + Chrome authenticated／unauthenticated smoke check | passed | `BackofficeShell.test.js`、`backofficeModules.test.js`、純 admin／純 seller 與雙角色 fixture Chrome smoke；雙角色可切換 seller／admin workspace |
+| `AC-UI-002` | `SCN-UI-004`、`SCN-UI-005` | seller role management component test + API mock + Chrome 409 check | passed | `SellerRoleManagement.test.js` 驗證確認／取消與 409 link；Chrome 驗證阻擋原因、原狀態與「前往全站商品」入口 |
+| `AC-UI-003` | `SCN-UI-006`、`SCN-UI-007` | product page component test + Chrome seller create／owner check | in progress | seller A／B 建立商品與 owner snapshot、圖片欄位、空商品 CTA、刪除確認／失敗保留列表已通過；完整上傳人工流程仍待補 |
+| `AC-UI-004` | `SCN-UI-008`、`SCN-UI-009` | seller/admin order component test + Chrome cross-seller order check | passed | 訂單 #3 seller A／B scope、admin 完整詳情與實際建立時間通過；`OrderListPageForSeller.test.js` 覆蓋 NULL fallback |
+| `AC-UI-005` | `SCN-UI-010`、`SCN-UI-011` | responsive manual check + accessibility-oriented component test | in progress | 409、商品／訂單 empty state 與 seller 403 文案已補；完整 keyboard、401／外部錯誤流程待補 |
+| `AC-UI-006` | `SCN-UI-012` | visual review + compact resource-list usability check | in progress | Chrome 後台 shell／列表視覺 smoke 通過；完整頁面流程與日常操作 review 待補 |
+| `AC-UI-007` | `SCN-UI-013`、`SCN-UI-014` | module registry contract test + route/role filtering + responsive navigation check | in progress | `backofficeModules.test.js`、`BackofficeShell.test.js`、Chrome admin 三組模組 route 與 375px 導覽；完整新增模組流程待補 |
+| `AC-UI-008` | `SCN-UI-015`、`SCN-UI-016` | theme selector component test + preference fallback + light/dark contrast smoke check | in progress | `ThemeContext.test.js`、`App.test.js`、Chrome admin order detail light/dark、preference reload、keyboard menu 與 storage failure fallback；system preference change 與完整資源頁 contrast 待補 |
 
 ## Review remediation（2026-09-09）
 

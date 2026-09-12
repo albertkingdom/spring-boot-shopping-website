@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -96,6 +97,7 @@ class OrderServiceImplTest {
         // 199.99 * 2 + 0.10 * 3 = 399.98 + 0.30 = 400.28, exact.
         assertEquals(new BigDecimal("400.28"), saved.getPriceSum());
         assertEquals(7L, saved.getUserId());
+        assertNotNull(saved.getCreatedAt());
     }
 
     @Test
