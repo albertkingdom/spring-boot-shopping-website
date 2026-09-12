@@ -16,6 +16,7 @@
 - 提供商家專用的商品與訂單查詢／管理 API，並確保所有權檢查在 Service 層執行。
 - 保留平台管理員的全站管理能力。
 - 在前端提供平台管理員的商家審核入口，以及商家的商品與訂單後台；公開商店維持原有購物流程。
+- 重新設計與多商家權限直接相關的後台工作空間、導覽與操作流程，讓平台管理員與商家能清楚辨識目前的資料視角。
 
 不包含：
 
@@ -48,18 +49,354 @@
 
 前端位於本 repository 的 `frontend/`；本規格同時定義前後端的畫面行為與 API contract，實作須在同一個 feature branch／PR 一起驗證。
 
-- **公開商店**：既有商品瀏覽、註冊、登入、購物車與下單畫面維持不變；不顯示全站商家管理入口。
-- **平台管理後台**：`ROLE_ADMIN` 登入後可在使用者列表搜尋已註冊帳號、查看目前角色，並執行「授予商家」或「撤銷商家」。撤銷因仍有商品而被拒絕時，顯示後端回傳的可行處理說明。
-- **商家中心**：`ROLE_SELLER` 登入後顯示「我的商品」與「我的訂單」入口。只有 seller 看得到此入口；一般 user 與純平台 admin 看不到也無法以 URL 繞過後端檢查。平台 admin 的跨商家工作留在平台管理後台，不能假裝成任一商家讀取 seller-scoped API。
-- **我的商品**：顯示目前商家自己的商品，提供新增、修改與刪除。表單不顯示或提交 `sellerId`；新增後由後端歸屬於登入商家。
-- **我的訂單**：只列出含有目前商家商品的訂單。詳情只顯示買家 email、此商家的商品項目、數量、單價與「本店小計」；不顯示其他商家項目或整張訂單總額。
-- **平台管理者的 seller 操作**：平台管理者在商品與訂單後台維持全站視角，並可切換檢視商家歸屬；這不等同商家的「我的」視角。
+### 設計目標與邊界
 
-第一版以既有設計系統與桌面後台流程為優先，畫面需能在窄螢幕完成基本查詢與操作；不在本功能加入商店頁、品牌樣式或賣家自訂外觀。
+- 將「公開商店」與「後台工作空間」分成清楚的產品區域；後台頁面固定顯示目前視角，例如「平台管理」或「商家中心」。
+- 平台管理員看到跨商家的全站資料；商家只看到自己的商品與訂單。UI 只協助降低誤操作，後端授權仍是唯一安全邊界。
+- 這次只改善多商家功能相關的資訊架構、導覽、表單、操作確認與回饋狀態；不加入商店頁、品牌樣式、賣家自訂外觀、抽成或分帳。
+- 不為了製作 dashboard 指標而新增統計 API；首頁使用工作入口、權限說明與待處理操作導引，實際資料仍來自既有 scoped API。
+- 視覺語氣採實用型電商／B2B 後台：中性底色、緊湊表格、少量圓角與陰影；不使用漸層、裝飾性大卡片、過多 badge 或 AI 助理式文案。
+
+### 業界參考與採用原則
+
+- **Shopify Admin** 將訂單、商品、客戶等核心資源放在持續可見的側欄，並在 top bar 提供搜尋與 store switcher；本專案採用相同的「固定後台 shell + 明確工作空間切換」概念，但將 store switcher 簡化為平台管理／商家中心切換。[Shopify Admin 導覽](https://help.shopify.com/en/manual/shopify-admin/shopify-admin-overview)
+- **Shopify order detail** 讓訂單詳情集中呈現商品、subtotal 與歷史資訊；本專案採用「列表 → 詳情」的工作流程，但 seller 詳情只呈現自己的 item 與本店小計，不能照搬全站資料視角。[Shopify 訂單詳情](https://help.shopify.com/en/manual/fulfillment/managing-orders/managing-order-details)
+- **Stripe Dashboard** 把資源導覽、搜尋、團隊／帳號操作與可重複的 dashboard shell 組合在一起；本專案先採用清楚的資源導覽與頁面上下文，global search 與 keyboard shortcut 暫列為後續能力，避免在沒有 API contract 時虛構搜尋功能。[Stripe Dashboard](https://docs.stripe.com/dashboard/basics)
+- **Amazon Seller Central** 的 Manage Orders 以訂單狀態、訂單編號、買家與商品作為日常處理入口；本專案先採用清楚的訂單列表、scope 提示與詳情入口，狀態分頁與進階篩選要等後端提供對應欄位與查詢 contract 後再加入。[Amazon Manage Orders](https://sell.amazon.com/blog/amazon-order-management)
+- 參考的是資訊架構與操作模式，不複製任何品牌色、文案、商業流程或受限制的畫面資產；所有 UI 仍以本專案既有 Bootstrap／React 組件與多商家資料隔離規則為準。
+
+### 後台工作空間與導覽
+
+- **公開商店**：既有商品瀏覽、註冊、登入、購物車與下單流程維持不變，不顯示全站商家管理入口。
+- **平台管理工作空間**：`ROLE_ADMIN` 使用 `/admin`，共用一個後台 shell，導覽為「概覽」、「商家權限」、「全站商品」、「全站訂單」。
+- **商家工作空間**：`ROLE_SELLER` 使用 `/seller`，共用同樣的後台 shell，導覽為「概覽」、「我的商品」、「我的訂單」。畫面固定顯示「只顯示本店資料」的 scope 提示。
+- **多角色帳號**：同時具有 `ROLE_ADMIN` 與 `ROLE_SELLER` 的使用者，在 header 顯示明確的工作空間切換入口；切換到平台管理或商家中心後，導覽、標題與資料視角同步切換，不自動把 admin 的全站資料混入 seller 畫面。
+- **未授權狀態**：一般 user、純 admin 或純 seller 直接輸入不適用 URL 時，顯示一致的權限說明或導向登入；不能只因前端隱藏連結就視為授權完成。
+
+### 可擴充的後台架構
+
+- 後台採用一個共用的 `BackofficeShell` 概念，統一承擔 header、工作空間切換、breadcrumb、scope 提示、側欄、頁面標題、載入／空白／錯誤狀態與 responsive layout；admin 與 seller 不各自複製一套 shell。
+- 導覽以單一 module registry／設定描述驅動，而不是把 admin 與 seller 的側欄 JSX 分散在各頁面。每個模組至少宣告穩定的 `key`、顯示名稱、route、適用 workspace、required role／capability、導覽群組與排序；同一份 metadata 同時驅動桌面側欄、窄螢幕導覽、active state、breadcrumb 與 route fallback。
+- 導覽群組先分為「工作台」、「營運」、「管理」；目前模組依角色放入對應群組。未來新增報表、促銷、履約或設定等功能時，只需新增符合 registry contract 的 module metadata 與頁面，不能為每個新功能重寫 shell、workspace switcher 或 mobile nav。
+- module registry 只負責入口顯示與前端 route guard；後端 endpoint 的 authentication、authorization、資料 scope 與 `403`／`404` 仍是最終安全邊界。即使使用者手動輸入 route 或前端設定錯誤，也不得因此取得未授權資料。
+- 頁面實作優先重用共用的 `PageHeader`、`ResourceTable`、`EmptyState`、`ErrorState`、`ConfirmDialog` 等 UI primitives，讓未來模組遵循相同的資料列表、確認操作、錯誤回饋與可及性模式。
+- 新增任何後台模組前，必須先在同一份 feature spec 定義其 workspace／role／scope、route 與 breadcrumb、API／資料影響、loading／empty／error／401／403 行為、窄螢幕操作，以及對應的 acceptance criteria 與 scenarios；未定義的功能不得直接塞入既有側欄。
+
+### 深色／淺色主題
+
+- 共用後台 shell 支援「跟隨系統」、「淺色」、「深色」三種模式；預設跟隨使用者的作業系統偏好，使用者手動選擇後以 browser-local preference 保存，不增加後端帳號設定或 API。
+- 主題切換套用到 header、側欄、頁面背景、列表／表單、對話框、toast、狀態 badge、輸入控制項與 focus indicator；不得只替換背景色而讓文字、邊框或錯誤／成功狀態失去可讀性。
+- 深色與淺色只改變 presentation，不改變 workspace、role、資料 scope、route、功能可見性或 API request；同一份 module registry 與驗收流程在兩種主題都必須成立。
+- 顏色不是唯一的狀態訊號；成功、警告、錯誤、目前選取與 disabled 狀態仍需搭配文字、位置、icon 或 native control state 表達。主題 token 應集中管理，未來模組不得自行散落硬編碼色碼。
+- 若 browser 不允許讀寫 local preference，介面仍須能切換主題，但可退回只在目前頁面生效並以 system preference 作為初始值；不得阻塞登入或後台主要操作。
+
+### 平台管理員流程
+
+- **概覽**：提供「管理商家權限」、「管理全站商品」、「查看全站訂單」三個主要入口與目前平台管理視角說明，不新增統計 API。
+- **商家權限**：使用搜尋欄依 email／名稱篩選，列表顯示帳號、目前角色與商家狀態；角色以易讀的 badge 呈現，不直接把 `ROLE_*` 當作主要文案。
+- **授予商家**：點擊「授予商家」後先開啟確認對話框，說明此操作會影響該帳號下一次登入後可見的功能；成功後更新該列並顯示結果。
+- **撤銷商家**：點擊「撤銷商家」後先確認；若後端回傳 `409`，保留列表狀態並以可理解的警告說明仍有商品歸屬，提供回到「全站商品」處理的入口，不假裝撤銷成功。
+- **全站商品／訂單**：維持平台 admin 的完整視角；商品列表可辨識平台自營或 seller 歸屬，訂單列表與詳情保留整單資訊。刪除或高風險操作要有確認與失敗回饋。
+
+### 商家流程
+
+- **概覽**：顯示商家 scope 說明與「新增商品」、「查看我的商品」、「查看我的訂單」主要操作；沒有跨商家統計或平台管理入口。
+- **我的商品**：列表顯示圖片、商品名稱、價格與操作；提供清楚的新增、編輯、刪除操作。新增／編輯表單不顯示、不接受或提交 `sellerId`，並在送出期間鎖定按鈕、顯示驗證與上傳錯誤。
+- **刪除商品**：先確認再送出；成功後依最新分頁結果留在有效頁面，失敗時保留原列表並顯示可重試訊息。
+- **我的訂單**：列表顯示訂單編號、買家 email、本店小計、成立時間與詳情入口；不顯示全單總額。詳情只顯示該商家的商品項目、數量、單價與本店小計。
+- **空白／載入／錯誤**：沒有商品或訂單時提供下一步 CTA；載入中不可重複送出操作；`401` refresh 失敗導向登入，`403` 顯示權限說明，其他錯誤提供保留資料與重試選項。
+
+## 主要操作流程
+
+以下流程是驗收時的實際操作腳本；每個流程都定義前置條件、使用者操作、預期 API／授權行為、成功結果與例外結果。實作測試與人工驗收應以流程中的 `AC-*`／`SCN-*` 對照，不只確認畫面上有按鈕。
+
+### FLOW-001：登入與後台工作空間進入
+
+**前置條件**
+
+- 測試帳號分別只有 `ROLE_ADMIN`、只有 `ROLE_SELLER`，以及同時具有兩種角色。
+- 一般 `ROLE_USER` 帳號也可用來驗證未授權狀態。
+
+**操作與預期結果**
+
+1. 使用者登入，前端取得登入 response／JWT 中的 role。
+2. `ROLE_ADMIN` 導向 `/admin`，顯示「平台管理」、全站商品與全站訂單入口。
+3. `ROLE_SELLER` 導向 `/seller`，顯示「商家中心」、我的商品與我的訂單，並顯示本店 scope 提示。
+4. 多角色帳號從 header 切換工作空間；側欄、breadcrumb、標題與 API scope 一起切換。
+5. `ROLE_USER` 或角色不足者直接輸入不適用 route；前端顯示登入／權限說明，後端仍回傳 `401` 或 `403`，不可取得資料。
+
+**驗收對應**：`AC-UI-001`、`AC-UI-005`；`SCN-UI-001`～`SCN-UI-003`、`SCN-UI-010`。
+
+### FLOW-002：平台管理員授予／撤銷商家角色
+
+**前置條件**
+
+- 操作者已登入且具有 `ROLE_ADMIN`。
+- 授予測試目標只有 `ROLE_USER`；撤銷測試目標具有 `ROLE_SELLER` 且仍擁有商品。
+
+**操作與預期結果**
+
+1. 進入「平台管理 → 商家權限」，依 email／名稱搜尋目標帳號。
+2. 點擊「授予商家」或「撤銷商家」；畫面先顯示確認對話框，不直接送出。
+3. 確認授予時呼叫 `POST /api/admin/users/{userId}/roles/seller`；成功 `204` 後更新列表並提示目標帳號下次登入可使用商家中心。
+4. 確認撤銷時呼叫 `DELETE /api/admin/users/{userId}/roles/seller`；若目標仍有商品，收到 `409` 後保留原 seller 狀態，顯示原因並提供前往全站商品的入口。
+5. 非 admin 直接呼叫 endpoint 時回傳 `403`；目標不存在回傳 `404`；重複授予或不適用撤銷回傳 `409`，畫面不得宣稱成功。
+
+**驗收對應**：核心驗收條件 1、8；`AC-UI-002`；`SCN-UI-004`、`SCN-UI-005`。
+
+### FLOW-003：商品列表與商品 owner 控制
+
+**前置條件**
+
+- 準備 seller A、seller B、admin，以及 seller A 建立的商品。
+- 商品表單不包含 `sellerId`、owner ID 或可任意指定歸屬的欄位。
+
+**操作與預期結果**
+
+1. seller A 進入「商家中心 → 我的商品」，列表只呼叫 seller-scoped API，點擊「新增商品」並送出表單。
+2. seller 新增使用 `POST /api/products`；Service 從已驗證身份設定 owner，成功回傳 `201`，列表顯示新商品。
+3. admin 進入「平台管理 → 全站商品」並新增平台商品；使用 `/api/admin/products`，伺服器固定保存 `seller_id = NULL`，成功回傳 `201`。
+4. seller A 編輯／刪除自己的商品；送出期間鎖定控制項，成功後以最新列表與有效頁碼更新畫面，刪除失敗則保留原列表並提供重試。
+5. seller B 嘗試透過畫面或直接 request 編輯／刪除 seller A 商品，Service 回傳 `403`；不能靠前端隱藏按鈕作為唯一防護。
+6. 輸入驗證錯誤回傳 `400`，找不到商品回傳 `404`；上傳成功但 DB 寫入失敗時執行 Cloudinary 補償刪除並記錄不含敏感資料的 log。
+
+**驗收對應**：核心驗收條件 2、3；`AC-UI-003`、`AC-UI-005`；`SCN-UI-006`、`SCN-UI-007`。
+
+### FLOW-004：公開瀏覽、下單與 seller snapshot
+
+**前置條件**
+
+- 公開商品中同時存在 seller A 商品與平台自營／歷史商品。
+- 一般使用者未登入或已登入皆可走既有公開購物流程。
+
+**操作與預期結果**
+
+1. 使用者從公開商店瀏覽商品、加入購物車並送出訂單；公開流程不顯示後台角色或 seller 管理入口。
+2. 下單 Service 依每個商品當下的 owner 寫入 `order_item.seller_id`，並保存商品名稱與單價快照。
+3. seller 商品的 item 保存對應 seller ID；平台自營／歷史商品可保存 `NULL` seller snapshot，整筆訂單仍成功建立。
+4. 商品後續修改或刪除後，既有訂單的名稱、單價與 seller snapshot 不被改寫。
+5. 下單輸入錯誤回傳 `400`；商品不存在回傳 `404`；公開購物流程不可因 seller snapshot 為 `NULL` 而拋出未處理例外。
+
+**驗收對應**：核心驗收條件 4、5；Review remediation 驗收條件 3；公開 checkout 與 order service integration test。
+
+### FLOW-005：Seller／Admin 訂單列表與詳情
+
+**前置條件**
+
+- 建立一筆同時包含 seller A、seller B 與平台自營 item 的跨商家訂單。
+- 準備 seller A 與 `ROLE_ADMIN` 登入 session。
+
+**操作與預期結果**
+
+1. seller A 進入「商家中心 → 我的訂單」，呼叫 `GET /api/seller/orders`，列表只顯示含有 seller A item 的訂單、本店小計、買家 email、時間與詳情入口。
+2. seller A 開啟訂單詳情，呼叫 `GET /api/seller/orders/{id}`；只顯示 seller A 的 item、數量、單價與本店小計，不顯示 seller B item、平台 item、整單總額或全站訂單列表。
+3. admin 進入「平台管理 → 全站訂單」，查看同一筆訂單的列表與詳情；可看到所有 item、完整訂單與整單總額。
+4. seller 直接輸入不屬於自己的 order route 或 request 時，回傳 `403`／適當的 scoped 結果，不洩漏其他 seller 資料。
+5. seller 訂單查詢不可對每張訂單額外查詢買家；access token 過期時先依既有 refresh 流程處理，refresh 失敗則導向登入並保留可理解的錯誤。
+
+**驗收對應**：核心驗收條件 6、7；Review remediation 驗收條件 5；`AC-UI-004`；`SCN-UI-008`、`SCN-UI-009`。
+
+### FLOW-006：共用狀態、RWD 與鍵盤操作
+
+**前置條件**
+
+- 以 admin 與 seller 各操作一次主要列表流程。
+- 分別準備 loading、empty、`400`、`401`、`403`、`409`、外部服務失敗與最後一頁刪除情境。
+
+**操作與預期結果**
+
+1. 載入資料時顯示 loading，避免重複送出；無資料時保留 shell／導覽並提供下一步 CTA。
+2. 取得 `401` 時依 refresh 結果重新請求或導向登入；`403` 顯示權限說明；`409` 顯示後端衝突原因；其他錯誤保留可用資料並提供重試。
+3. 將 viewport 縮小至窄螢幕，側欄依同一份 module registry 轉為可操作的水平／收合導覽，列表與操作不被裁切。
+4. 只使用鍵盤完成 workspace 切換、導覽、搜尋、表單送出、確認對話框與返回列表；所有控制項有可辨識名稱與 focus indicator。
+
+**驗收對應**：`AC-UI-005`；`SCN-UI-010`、`SCN-UI-011`。
+
+### FLOW-007：深色／淺色主題切換
+
+**前置條件**
+
+- 使用者已登入任一後台 workspace，browser 可能允許或拒絕 local preference 讀寫。
+
+**操作與預期結果**
+
+1. 從 header 的顏色模式選單選擇「跟隨系統」、「淺色」或「深色」。
+2. 切換後 header、側欄、頁面背景、列表、輸入框、按鈕、對話框、toast、狀態與 focus indicator 同步更新，文字與狀態仍可辨識。
+3. 手動選擇時寫入 browser-local preference；重新載入後仍使用該選擇。選擇跟隨系統時，系統明暗偏好變更後更新主題。
+4. 確認主題切換前後 workspace、route、module registry、API request、角色權限與資料 scope 完全不變。
+5. local preference 讀寫失敗時，主題仍可在目前頁面切換，並退回 system preference；不得阻塞登入、導覽或主要操作。
+
+**驗收對應**：`AC-UI-008`；`SCN-UI-015`、`SCN-UI-016`。
+
+### FLOW-008：新增後台模組
+
+**前置條件**
+
+- 假設未來註冊只允許 `ROLE_ADMIN` 的 `reports` module。
+- module metadata 已包含 `key`、label、route、workspace、required role／capability、導覽群組、排序與 breadcrumb。
+
+**操作與預期結果**
+
+1. 將 module metadata 加入 registry，頁面使用既有 `BackofficeShell` 與共用狀態元件，不新增另一套 admin／seller shell。
+2. admin 登入後在指定導覽群組看到 `reports`，點擊後 active state、breadcrumb、頁面標題與 route 一致；窄螢幕仍由同一份 registry 產生可操作導覽。
+3. seller 登入後看不到 `reports` 入口；seller 直接輸入 route 時前端 route guard 顯示一致的權限結果，後端 API 仍回傳 `403` 且不提供資料。
+4. 新模組若需要 API、資料模型、狀態或新的商業規則，先更新同一份 feature spec 與驗收對照，再開始實作，不以新增側欄項目取代需求定義。
+
+**驗收對應**：`AC-UI-007`；`SCN-UI-013`、`SCN-UI-014`。
+
+### UI/UX 驗收條件
+
+#### AC-UI-001：角色工作空間與導覽一致
+
+- Requirement: 多商家角色的後台入口與資料視角必須清楚分離。
+- Must be true: admin、seller、同時具有兩種角色的帳號，各自只能看到適用的工作空間導覽；多角色帳號可以明確切換但不會混用 scope。
+- Validation scenarios: `SCN-UI-001`、`SCN-UI-002`、`SCN-UI-003`
+
+#### AC-UI-002：平台管理員可安全處理商家權限
+
+- Requirement: 商家角色授予／撤銷是可確認、可回饋且不誤報成功的操作。
+- Must be true: 成功操作更新列表；`409` 撤銷衝突保留原狀態、顯示後端原因並引導處理；一般 user 無法看到或執行該功能。
+- Validation scenarios: `SCN-UI-004`、`SCN-UI-005`
+
+#### AC-UI-003：商家商品流程支援日常操作
+
+- Requirement: seller 能在自己的工作空間完成商品查詢、新增、編輯與刪除。
+- Must be true: 列表與表單不暴露 owner 欄位；刪除與上傳失敗不會清空或誤更新既有列表；分頁會停留在有效頁碼。
+- Validation scenarios: `SCN-UI-006`、`SCN-UI-007`
+
+#### AC-UI-004：商家訂單流程維持資料隔離
+
+- Requirement: seller 能查看自己的訂單，但不能從畫面取得其他 seller item 或整單金額。
+- Must be true: 列表與詳情只顯示 seller-scoped response 的欄位；admin 仍保留完整訂單視角。
+- Validation scenarios: `SCN-UI-008`、`SCN-UI-009`
+
+#### AC-UI-005：各狀態與窄螢幕操作可理解
+
+- Requirement: 後台在主要非正常狀態仍能讓使用者理解下一步。
+- Must be true: loading、empty、error、401、403、409 都有明確文案與適當操作；窄螢幕不需要水平捲動才能完成主要查詢與操作，互動控制項有可辨識的名稱。
+- Validation scenarios: `SCN-UI-010`、`SCN-UI-011`
+
+#### AC-UI-006：視覺呈現符合日常營運後台
+
+- Requirement: 後台需要讓使用者快速掃描資料與執行操作，而不是呈現行銷型 dashboard。
+- Must be true: 主要畫面以資源列表、欄位、狀態與明確操作為主；色彩、圓角、陰影與摘要區塊保持克制，不出現與功能無關的裝飾性元件。
+- Validation scenarios: `SCN-UI-012`
+
+#### AC-UI-007：後台模組可擴充
+
+- Requirement: 未來增加後台功能時，能沿用既有 shell、導覽與狀態元件，不因 admin／seller 或桌面／窄螢幕而複製多套流程。
+- Must be true: 新模組只要提供 registry metadata 與頁面即可出現在正確 workspace／導覽群組；同一份 metadata 驅動 desktop nav、mobile nav、active state、breadcrumb 與 route guard；不符合角色的使用者看不到入口，直接輸入 URL 也不會取得資料。
+- Validation scenarios: `SCN-UI-013`、`SCN-UI-014`
+
+#### AC-UI-008：深色／淺色主題一致且可讀
+
+- Requirement: 後台可依系統偏好或使用者選擇使用深色／淺色主題，且不影響功能與資料隔離。
+- Must be true: header、側欄、列表、表單、對話框、toast、狀態與 focus indicator 在兩種主題都有足夠對比與可辨識狀態；重新載入後保留手動選擇，選擇跟隨系統時會回應系統偏好變更；主題切換不改變 role、workspace、route 或 API scope。
+- Validation scenarios: `SCN-UI-015`、`SCN-UI-016`
+
+#### SCN-UI-001：純平台管理員登入
+
+- Given 帳號只有 `ROLE_ADMIN`
+- When 登入並進入後台
+- Then 看到平台管理工作空間與全站商品／訂單入口，不看到商家中心入口
+
+#### SCN-UI-002：純商家登入
+
+- Given 帳號只有 `ROLE_SELLER`
+- When 登入並進入後台
+- Then 看到商家中心、我的商品與我的訂單，且頁面顯示只讀取本店資料的提示
+
+#### SCN-UI-003：多角色工作空間切換
+
+- Given 帳號同時具有 `ROLE_ADMIN` 與 `ROLE_SELLER`
+- When 從 header 切換工作空間
+- Then 導覽、標題與資料 API scope 一起切換，seller 畫面不顯示 admin 全站資料
+
+#### SCN-UI-004：授予商家角色
+
+- Given admin 在商家權限列表找到一般使用者
+- When 確認「授予商家」
+- Then 呼叫既有 admin endpoint，成功後該列顯示 seller 狀態與重新登入提示
+
+#### SCN-UI-005：撤銷商家被商品阻擋
+
+- Given seller 仍擁有商品
+- When admin 確認「撤銷商家」
+- Then 後端回傳 `409` 時保留 seller 狀態，顯示阻擋原因與前往全站商品的處理入口
+
+#### SCN-UI-006：商家商品日常操作
+
+- Given seller 進入我的商品
+- When 查詢、新增、編輯或刪除商品
+- Then 只使用 seller-scoped／owner-checked API，表單不含 `sellerId`，成功或失敗都有對應結果
+
+#### SCN-UI-007：商家商品列表邊界狀態
+
+- Given seller 商品為空、刪除最後一筆或 access token 過期
+- When 載入或操作列表
+- Then 顯示 empty／重新登入／錯誤狀態，分頁保持有效且不清除既有資料
+
+#### SCN-UI-008：商家查看訂單
+
+- Given 一筆訂單含有多家 seller 的商品
+- When seller A 查看訂單列表與詳情
+- Then 只顯示 seller A 的 item、買家 email、本店小計與必要欄位，不顯示其他 seller item 或整單總額
+
+#### SCN-UI-009：平台管理員查看完整訂單
+
+- Given admin 進入全站訂單
+- When 查看列表與詳情
+- Then 可看到完整訂單、整單總額與所有 item，且不被 seller UI 的 scope 限制
+
+#### SCN-UI-010：權限與錯誤回饋
+
+- Given 使用者未登入、角色不足、操作衝突或外部請求失敗
+- When 後台請求失敗
+- Then 分別顯示登入、權限、409 衝突或可重試的錯誤，不宣稱操作成功
+
+#### SCN-UI-011：窄螢幕與鍵盤操作
+
+- Given 瀏覽器寬度縮小或使用鍵盤操作
+- When 使用主要後台流程
+- Then 導覽可收合、表格／卡片仍可閱讀，按鈕與表單欄位有可辨識名稱，主要操作不被裁切
+
+#### SCN-UI-012：日常營運視覺
+
+- Given 使用者每天需要處理商家、商品或訂單
+- When 開啟任一後台主要列表
+- Then 可以直接辨識頁面、資料欄位、目前 scope 與下一步操作，不被大型摘要卡、裝飾性動畫或過度品牌化視覺干擾
+
+#### SCN-UI-013：新增模組不重寫後台 shell
+
+- Given 後續功能註冊一個只允許 `ROLE_ADMIN` 的 `reports` module，並提供 route、導覽群組與頁面標題 metadata
+- When module 被啟用並從平台管理工作空間進入
+- Then 它出現在正確的導覽群組，桌面／窄螢幕導覽、active state 與 breadcrumb 保持一致，且不需要新增另一套 shell 或複製 seller／admin 側欄；seller 不會看到該入口
+
+#### SCN-UI-014：新模組的 route 與 responsive fallback
+
+- Given 使用者直接輸入未授權的新模組 route，或在窄螢幕開啟該模組
+- When 前端 route guard 與後端 API 授權執行
+- Then 未授權使用者看到一致的 `403`／導向結果且不取得資料；已授權使用者仍使用同一份 registry 產生可操作的窄螢幕導覽，不需要水平捲動才能完成主要操作
+
+#### SCN-UI-015：切換深色／淺色主題
+
+- Given 使用者已登入後台，且目前位於任一 admin／seller 資源列表
+- When 從 header 選擇淺色或深色主題
+- Then header、側欄、列表、按鈕、輸入框、狀態與錯誤／成功回饋同步換色，文字與控制項仍可辨識；目前 workspace、頁面、資料內容與 API scope 不變
+
+#### SCN-UI-016：主題偏好與瀏覽器限制
+
+- Given 使用者選擇跟隨系統或手動選擇主題，且 browser local preference 可能可用或不可用
+- When 重新載入頁面、切換系統明暗偏好，或遇到 local preference 讀寫失敗
+- Then 跟隨系統模式會反映目前系統偏好，手動選擇會在可用時保留；讀寫失敗時仍能使用目前頁面的主題，不阻塞登入、導覽與主要操作
+
+第一版仍以既有設計系統與桌面後台流程為基礎，這次 redesign 不引入新的視覺品牌或賣家自訂外觀。
 
 ## API 影響
 
 既有公開 `GET /api/products/**` 與一般使用者 `POST /api/order` 維持相容。
+
+本次 UI/UX redesign 不新增或修改後端 HTTP endpoint、request、response、status code 或授權規則；只重新編排既有路由與既有 API 的前端使用流程。深色／淺色主題與 browser-local preference 完全由前端處理，不進入 API contract。若實作需要新增 dashboard 統計或訂單篩選 API，必須先回到 Propose 更新本 spec，不得在 UI 工作中默默擴大 contract。
 
 預計新增：
 
@@ -81,6 +418,8 @@
 - `order_item` 新增可索引且有外鍵的 `seller_id`，作為下單當時的賣家快照。
 - 既有資料 migration 時允許 `seller_id` 為 `NULL`：舊商品僅由 `ROLE_ADMIN` 管理，不能被商家認領。seller 新增的商品必須有非空 seller；平台 admin 新增的平台商品可維持 `NULL`。此策略不會任意將既有商品分配給錯誤商家。
 - production 目前尚未建立商品或訂單，但 migration 必須同樣能安全套用到有既有資料的環境。
+
+本次 UI/UX redesign 無資料模型、schema、migration、seed data 或既有資料處理變更；所有畫面仍使用既有角色、商品 owner 與訂單 seller snapshot。主題偏好若需要保存，只存於 browser local preference，不寫入使用者、商家或訂單資料。
 
 ## 商業與安全規則
 
@@ -109,6 +448,8 @@
 - Controller/security test：seller/admin/user 各角色的 endpoint 授權、公開註冊不得指定角色、越權回傳 `403`、response 不含其他商家 item 與全單總額。
 - MySQL integration test：Flyway V5 可由既有 schema 套用、外鍵／index 正確、舊商品為 `NULL` owner 時的 admin-only 行為，以及多商家訂單的查詢隔離。
 - 前端測試：各角色看到的入口正確、seller 商品／訂單頁只使用 scoped API、role 變更後重新登入可看到正確功能；端對端驗證商家 A 無法透過畫面或直接 request 取得商家 B 資料。
+- UI redesign 測試：以 React Testing Library 覆蓋工作空間切換、module registry 的 role／workspace filtering、route metadata 的 active state／breadcrumb、主題模式切換與 preference fallback、商家角色授予／撤銷確認與 `409` 回饋、商品 empty／error／分頁狀態、訂單 scope 欄位、窄螢幕導覽、可辨識的互動名稱與實用型視覺檢查；每項測試需對應 `AC-UI-*`／`SCN-UI-*`，並確認 desktop 與 mobile 導覽使用同一份 registry。
+- 主題驗收：至少在淺色、深色與跟隨系統三種模式檢查主要頁面，確認文字／背景／邊框／focus／錯誤與成功狀態的對比、鍵盤操作與資料 scope 不變；若專案採用 automated accessibility tooling，將兩種固定主題納入 contrast smoke test。
 - 執行 `./mvnw test` 與 `./mvnw verify`；staging 建立至少兩個 seller 與跨商家訂單驗收資料後，手動驗證隔離。
 
 ## 實作 Todo
@@ -126,6 +467,33 @@
 - [x] 在 `frontend/` 實作平台管理員的 seller 授予／撤銷頁、商家中心、我的商品與我的訂單頁，並加入對應測試。
 - [x] 更新 API、角色、上架與 migration 文件；以 Java 21 + MySQL 執行 `./mvnw verify`，並完成前端測試與 production build。
 - [ ] 部署至 staging 後，以兩個 seller 與一筆跨商家訂單手動驗收商品及訂單隔離，再決定是否發 production release。
+
+## UI/UX redesign Todo（2026-09-12）
+
+- [ ] 建立共用後台 shell、header 工作空間切換、breadcrumb、scope 提示與一致的 responsive layout，並讓 admin／seller 側欄由同一份 module registry 產生；涵蓋 `AC-UI-001`／`AC-UI-005`／`AC-UI-007`。
+- [ ] 將視覺調整為中性、緊湊、以列表操作為主的商務後台，移除裝飾性 dashboard 卡片與 AI 式文案；涵蓋 `AC-UI-006`／`SCN-UI-012`。
+- [ ] 重整 admin 概覽、商家權限、全站商品與全站訂單的資訊架構與操作確認；涵蓋 `AC-UI-001`／`AC-UI-002`／`AC-UI-005`。
+- [ ] 重整 seller 概覽、我的商品與我的訂單流程；保留 owner／seller-scoped API contract，不新增 `sellerId` 欄位；涵蓋 `AC-UI-003`／`AC-UI-004`。
+- [ ] 補齊 loading、empty、error、401、403、409、refresh 失敗與刪除後分頁回退的畫面狀態；涵蓋 `SCN-UI-005`／`SCN-UI-007`／`SCN-UI-010`。
+- [ ] 補 React Testing Library 與必要的 route／manual validation，逐項填寫 Verification and Acceptance 的實際證據；涵蓋 `SCN-UI-001`–`SCN-UI-011`。
+- [ ] 在窄螢幕與鍵盤操作下完成人工驗收，確認主要查詢、授權與商品／訂單操作不被裁切；涵蓋 `AC-UI-005`／`SCN-UI-011`。
+- [ ] 建立後續模組的 extension checklist：module key、workspace／role／scope、route／breadcrumb、導覽群組／排序、API／資料影響、各狀態與 responsive 操作；涵蓋 `AC-UI-007`／`SCN-UI-013`／`SCN-UI-014`。
+- [ ] 建立共用主題 token 與 header theme selector，支援 system／light／dark，並讓 shell、module registry 頁面與狀態元件共用；涵蓋 `AC-UI-008`／`SCN-UI-015`。
+- [ ] 補主題 preference persistence、system preference change 與 local preference 失敗 fallback 測試；涵蓋 `SCN-UI-016`。
+- [ ] 在淺色／深色主題下完成 keyboard、responsive 與 contrast manual／automated smoke check，將實際證據填入驗收對照表；涵蓋 `AC-UI-008`。
+
+## UI/UX redesign 驗收對照
+
+| Acceptance | Scenario | 測試／驗證方式 | Result | Evidence |
+|---|---|---|---|---|
+| `AC-UI-001` | `SCN-UI-001`、`SCN-UI-002`、`SCN-UI-003` | route／navigation component test | pending | 待補測試檔與結果 |
+| `AC-UI-002` | `SCN-UI-004`、`SCN-UI-005` | seller role management component test + API mock | pending | 待補測試檔與結果 |
+| `AC-UI-003` | `SCN-UI-006`、`SCN-UI-007` | product page component test + manual upload/delete check | pending | 待補測試檔與結果 |
+| `AC-UI-004` | `SCN-UI-008`、`SCN-UI-009` | seller/admin order component test + response field assertion | pending | 待補測試檔與結果 |
+| `AC-UI-005` | `SCN-UI-010`、`SCN-UI-011` | responsive manual check + accessibility-oriented component test | pending | 待補測試檔與結果 |
+| `AC-UI-006` | `SCN-UI-012` | visual review + compact resource-list usability check | pending | 待補驗收結果 |
+| `AC-UI-007` | `SCN-UI-013`、`SCN-UI-014` | module registry contract test + route/role filtering + responsive navigation check | pending | 待補測試檔與結果 |
+| `AC-UI-008` | `SCN-UI-015`、`SCN-UI-016` | theme selector component test + preference fallback + light/dark contrast smoke check | pending | 待補測試檔與結果 |
 
 ## Review remediation（2026-09-09）
 
