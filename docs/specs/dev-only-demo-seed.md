@@ -1,5 +1,7 @@
 # 僅開發環境的 Demo Seed
 
+> Legacy feature spec：本檔案保留作歷史參考；新的目前系統契約請查看 [`openspec/specs/`](../../openspec/specs/)，新的變更請建立於 [`openspec/changes/`](../../openspec/changes/)。
+
 ## 背景與目標
 
 先前未提交的 `V5__seed_demo_data.sql` 曾位於正式 Flyway migration location。即使檔案尚未被 Git 追蹤，Maven 與 Docker build 仍會把它打包，Flyway 也會在所有 profile 掃描並執行它。這會使所有環境（包括 production）自動建立展示資料，且將固定的管理員密碼 hash 永久納入版本控制，違反 `docs/database-migration.md` 的安全規則。該檔案已移除；本規格定義其安全替代方案。

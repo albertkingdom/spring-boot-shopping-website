@@ -10,48 +10,22 @@
 - 一般功能修改必須維持目前 Java 與 Spring Boot 相容性；框架或 Java 升級應視為獨立 migration 工作，不得混入一般功能 PR。
 - 架構改善項目與優先順序記錄在 `ARCHITECTURE_TODO.md`。完成項目時同步更新核選框與相關文件。
 
-## Feature Specification and Planning
+## Specification and Planning
 
-- 規劃或實作新 feature 時，必須先使用 `$feature-spec` skill 建立或更新 spec 與可核選的 todo list；若當前 session 無法載入該 skill，使用 `.codex/skills/project-sdd-workflow/` 的規則與範本完成等價內容。
-- 在 spec 與 todo list 足以指導並驗收實作前，不開始撰寫功能程式碼。Spec 的位置、必要內容、核選清單與更新規則以 `$feature-spec` skill 或 project-local fallback 為準。
-- Spec 是功能的「需求與驗收契約」：記錄背景、目標、範圍與非目標、前後端／API／資料影響、安全與商業規則、可觀察的驗收條件與測試策略。它回答「為什麼做、要做到什麼、什麼算完成」，不是開發日誌。
-- Todo list 是同一份 spec 內的「執行清單」：將 migration、後端、前端、測試、文件與驗證拆成可依序完成的工作。只有有實作或驗證證據時才能勾選；它不得取代 spec 的產品決策或自行擴大範圍。
-- 同一 feature 同時影響前端與後端時，使用一份共同 spec 描述完整使用流程與 API contract；前端與後端 todo 可分列，但必須能共同對應同一組驗收條件。
-- 需求、API contract、資料模型、授權規則或畫面流程有實質改變時，先更新 spec 與 todo，再繼續實作。
-- 使用 `$feature-spec` 只代表建立或更新規劃文件，不代表已獲授權實作功能、commit、push 或部署。
-
-### Spec 最低內容
-
-- 新 feature 的 spec 與 todo 一律放在同一份 `docs/specs/<feature-name>.md`；不要將需求與執行清單分散到不同目錄或 issue。
-- 背景與目標：問題、受影響使用者／系統與預期成果。
-- 範圍：包含項目、明確非目標與必要假設。
-- 實作理由與指引：主要前後端元件、資料／請求流向、重要取捨，讓工程師知道如何安全實作。
-- 情境與驗收條件：以可觀察、可驗證的結果描述主要流程。
-- 新建或實質更新 spec 時，驗收條件使用 `AC-*`、情境使用 `SCN-*` 標記，並能對應到 todo 與測試／人工驗證證據。
-- API 影響：endpoint、request／response、HTTP status、授權與相容性；無影響也要明寫。
-- 資料影響：model、schema migration、constraint、既有資料處理與 seed data；無影響也要明寫。
-- 商業與安全規則：角色、所有權、資料隔離、敏感資料與不可違反的規則。
-- 錯誤與邊界情況：輸入、找不到資源、衝突、越權、外部服務失敗與預期回應。
-- 測試策略：對應驗收條件的 unit、controller/security、integration、前端或端對端測試。
-
-### Todo list 最低內容
-
-- 依相依關係排序，拆成能獨立實作與驗證的小步驟。
-- 除程式碼外，須列出必要 migration、前端、測試、文件、環境設定與最終驗證。
-- 每個 todo 要能對應 spec 的範圍或驗收條件；若需求變更，先更新 spec，再調整 todo。
-- 只有完成實作且具備相應測試、部署或人工驗證證據時才能勾選；規劃、部分完成或推測不可勾選。
-- 完成後保留 spec 與全數勾選的 todo，作為行為、驗收與維護紀錄；不要直接刪除。已不需日常閱讀的舊規格可移至 `docs/specs/archive/`。
-
-## Spec-Driven Development Workflow
-
-本 repository 採用參考 Spectra 3.x／OpenSpec 的規格驅動流程；詳細操作規範維護在 project-local skill：`.codex/skills/project-sdd-workflow/SKILL.md`。
-
-- 處理新 feature、需求變更、實作、驗收或歸檔前，先讀取並遵守該 skill。
-- 流程階段為 `Discuss → Propose → Pre-implementation review → Apply → Ingest → Verify → Review → Archive`。
-- Spec 建立或更新時，使用該 skill 的 `references/feature-spec-template.md`；範本是結構指引，仍須依功能實際需求補齊內容。
-- `Verify` 負責執行測試與記錄驗收證據；`Review` 只產生 findings，不修改、stage 或 commit 檔案。`analyze`、`audit`、`drift` 僅在需求或風險相關時使用。
-- 即使沒有安裝 Spectra CLI 或對應 skill，也必須依該文件手動完成流程；工具名稱不代表已授權 commit、push、部署或其他外部操作。
-- `AGENTS.md` 的安全、架構、測試與 Git 規則優先於 project-local skill；兩者衝突時以 `AGENTS.md` 為準。
+- 新 feature、需求變更、API／schema／認證／授權／UI／環境變更，使用 OpenSpec change：`openspec/changes/<change-name>/`。
+- 開始撰寫功能程式碼前，`proposal.md`、相關 delta spec、`design.md`（需要時）與 `tasks.md` 必須足以描述 why、what、how、步驟與驗收方式；純 migration／architecture change 仍以 architecture delta 記錄規格治理契約，不建立舊格式的 feature spec。
+- `openspec/specs/` 是目前系統的 living source of truth，每個 capability 使用一份 `spec.md`；新的功能規格不得再建立於 `docs/specs/<feature-name>.md`。
+- Active change 的行為差異使用 `ADDED`、`MODIFIED`、`REMOVED`、`RENAMED Requirements` 與可驗證 Scenario 描述；完成後再同步回 living specs。
+- 開始工作前先閱讀 [`openspec/README.md`](openspec/README.md)、[`openspec/specs/README.md`](openspec/specs/README.md)、相關 capability specs 與本檔案。
+- 需求、API contract、資料模型、授權規則或畫面流程有實質改變時，先更新 active change artifacts，再修改程式碼。
+- OpenSpec 規劃只代表建立文件與執行清單，不代表已獲授權 commit、push、merge、部署或其他外部操作。
+- `tasks.md` 只有在實作完成且具備相應測試、部署或人工驗證證據後才能勾選；規劃中、部分完成或推測不可勾選。
+- 驗收證據記錄在 change 的 `verification.md`：至少包含命令、測試資料、操作步驟、預期／實際結果、環境、日期與已知限制，且能回溯到 Requirement／Scenario。
+- 涉及程式碼的 feature 完成實作與受影響測試後，必須在 sync、archive 或建立 PR 前執行 `.agents/skills/project-code-review/` 的 code review skill。
+- Code review 結果獨立記錄在 change 的 `code-review.md`；finding 使用穩定 ID、嚴重度與 checkbox 追蹤修復，不得把 review 詳情混入 `tasks.md` 或 `verification.md`。
+- Review 發現原本規劃不足時，先暫停修正並更新 active change 的 proposal、delta specs、design 與 tasks；若是不同意圖則建立新的 change。規劃更新後重新進行 pre-implementation review，再修正程式碼與重跑受影響 review。
+- 完成 change 時，將 delta 同步到 `openspec/specs/`，再保留完整 change 歸檔於 `openspec/changes/archive/YYYY-MM-DD-<name>/`。
+- 官方 OpenSpec Codex skills 位於 `.agents/skills/openspec-*`；舊的 project-local SDD skill 不再使用。`$feature-spec` 不再是本 repository 的一般 feature workflow。
 
 ## Architecture
 
@@ -100,6 +74,7 @@
 
 - 所有 Maven 指令使用 repository 內的 wrapper：`./mvnw`。
 - 若本機預設 JDK 與 `pom.xml` 要求的 Java 版本不相容，優先以對應 Java Docker image 在容器內執行 `./mvnw`；除非使用者明確授權，不為了測試安裝 JDK 或變更使用者的系統預設 Java。
+- 本機執行需要 MySQL、Flyway 或 Spring context 的完整後端驗證時，優先使用既有測試 compose：`MAVEN_GOAL=verify docker compose -p shopping-test -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test`；測試結束後以 `docker compose -p shopping-test -f docker-compose.test.yml down --volumes --remove-orphans` 清除暫時 container、network 與測試資料。
 - 若 container runtime 不可用，但對應 JDK 已安裝，可在單一命令以 `JAVA_HOME` 明確指定該 JDK 執行 `./mvnw`；不得修改全域 shell 設定或系統預設 Java。
 - 容器化測試仍必須執行 `./mvnw test` 或 `./mvnw verify`；production Dockerfile 中的 `-DskipTests` build 不得視為測試驗證。
 - 修改前先確認相關測試；修改後至少執行受影響範圍的測試。
@@ -177,12 +152,16 @@
 
 ## Definition of Done
 
-- [ ] 新 feature 已依 `$feature-spec` skill 在實作前建立 spec 與 todo list，並已更新為最終行為、驗收條件與完成狀態。
-- [ ] 每個驗收條件都有通過的測試或人工驗證證據，必要的 staging 驗收結果已記錄在 spec 或對應 todo。
+- [ ] 本次變更使用 OpenSpec active change；若為 migration／architecture change，proposal、design、tasks 與必要的驗證紀錄已完成。
+- [ ] 受影響的 `openspec/specs/` 已同步，或已確認在 archive 階段同步；active change 保留完整 delta 與歷史脈絡。
+- [ ] 每個 Requirement／Scenario 都有通過的測試或人工驗證證據，必要的 staging 驗收結果已記錄在 change 的 `verification.md`。
+- [ ] 涉及程式碼的 feature 已完成 project code review，`code-review.md` 已記錄結果；不得有未處理的 P0/P1 finding。
+- [ ] 若 code review 導致原本規劃改變，proposal、delta specs、design、tasks 已同步更新，且受影響項目已重新 review。
 - [ ] 實作符合本檔案的分層、安全與資料規則。
 - [ ] 受影響測試已新增或更新且通過。
 - [ ] `./mvnw test` 通過；需要時 `./mvnw verify` 也通過。
 - [ ] 沒有新增 secret、敏感 log 或不必要的公開欄位。
 - [ ] API、migration、環境變數與操作方式的文件已同步。
+- [ ] 若目前系統行為有變更，對應的 `openspec/specs/<capability>/spec.md` 已同步更新；若無變更則不需更新。
 - [ ] 若本次工作完成或變更 `ARCHITECTURE_TODO.md` 中的對應架構項目，已同步更新核選框與相關文件；若無對應項目則不需更新。
 - [ ] Git diff 僅包含本次工作的相關變更。

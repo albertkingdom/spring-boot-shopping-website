@@ -1,5 +1,7 @@
 # 測試與正式環境隔離
 
+> Legacy feature spec：目前環境契約已整理至 [`openspec/specs/deployment-environments/spec.md`](../../openspec/specs/deployment-environments/spec.md)，本檔案保留作歷史參考，不再作為新變更的 source of truth。
+
 ## 背景與目標
 
 原本專案只有一份 root `docker-compose.yml` 與單一 named volume `db`；目前已拆出 dev、staging、prod Compose override，且 GitHub Actions 已發布 deployment image、以不可變 digest 建立 release manifest，並成功部署 staging。Compose 以 `MYSQL_DATABASE` 初始化 MySQL，並在 container 內組合 Spring JDBC URL。`.env.example` 的 localhost JDBC URL 僅適用於直接在主機執行 Spring。GitHub Actions 已以 MySQL service 執行 `./mvnw verify`，但 GitLab CI 的 test job 仍是 placeholder。production promotion 與 rollback 尚未實際驗證，且仍需完成 production 環境設定。這使本機、測試與正式環境容易共用資料庫、JWT secret 或第三方帳號，且無法在部署前取得可信的驗證結果。

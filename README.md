@@ -19,7 +19,11 @@
 - `ROLE_SELLER`：經平台管理員授予後，可使用商家中心；只能管理自己商品與讀取自己訂單項目。
 - `ROLE_USER`：一般買家；不能進入平台或商家後台。
 
-商家新增／更新／刪除商品使用既有 `/api/products/**`；後端從登入者決定商品 owner。商家清單與訂單必須使用 `/api/seller/products`、`/api/seller/orders`，不能以公開或 admin API 在前端過濾。詳見 [多商家規格](docs/specs/multi-seller-access.md)。
+商家新增／更新／刪除商品使用既有 `/api/products/**`；後端從登入者決定商品 owner。商家清單與訂單必須使用 `/api/seller/products`、`/api/seller/orders`，不能以公開或 admin API 在前端過濾。目前行為以 [Living specifications](openspec/specs/README.md) 為準；[多商家舊規格](docs/specs/multi-seller-access.md) 僅供歷史參考。
+
+## 開發文件入口
+
+本專案使用 OpenSpec 管理目前系統規格與進行中的變更。開始新功能前，先閱讀 [OpenSpec 工作流程](openspec/README.md) 與 [Living specifications](openspec/specs/README.md)，再建立 `openspec/changes/<change-name>/`。不要再建立 `docs/specs/<feature-name>.md`；完成驗收後將 delta 同步回 living specs 並 archive change。
 
 ## 使用技術
 - java spring boot框架

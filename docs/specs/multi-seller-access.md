@@ -1,5 +1,7 @@
 # 多商家商品與訂單權限
 
+> Legacy feature spec：目前系統契約已整理至 [`openspec/specs/`](../../openspec/specs/)，本檔案保留作歷史參考，不再作為新變更的 source of truth。
+
 ## 背景與目標
 
 目前系統只有 `ROLE_USER` 與 `ROLE_ADMIN`。`ROLE_ADMIN` 可管理全站商品、訂單與使用者，適合單一商店的後台，但不適合多商家平台：若直接把商家設為 admin，他們能看見其他商家的訂單與商品。
