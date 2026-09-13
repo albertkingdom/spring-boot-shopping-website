@@ -78,12 +78,22 @@ jobs:
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
 
+      - name: Build frontend assets on the native runner
+        working-directory: frontend
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE/frontend:/usr/src/app" \
+            --workdir /usr/src/app \
+            --env REACT_APP_BACKEND_URL= \
+            node:20-alpine \
+            sh -c 'npm ci && npm run build'
+
       - name: Build and publish frontend image
         id: frontend-image
         uses: docker/build-push-action@v7
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile.prod
+          file: ./frontend/Dockerfile.prod-runtime
           push: true
           platforms: linux/arm64
           tags: ghcr.io/${{ github.repository }}-frontend:sha-${{ github.sha }}
