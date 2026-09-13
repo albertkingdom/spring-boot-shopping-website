@@ -1,6 +1,7 @@
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /usr/src/app
 COPY package.json package-lock.json ./
+COPY patches ./patches
 RUN npm ci
 COPY . .
 ENV REACT_APP_BACKEND_URL=
