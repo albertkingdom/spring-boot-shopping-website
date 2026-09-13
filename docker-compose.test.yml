@@ -13,10 +13,26 @@ services:
       retries: 20
       start_period: 20s
 
+  migration-test-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: shopping_website_migration_test
+      MYSQL_USER: shopping
+      MYSQL_PASSWORD: shopping-ci-password
+      MYSQL_ROOT_PASSWORD: root-ci-password
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   test:
     image: eclipse-temurin:21-jdk
     depends_on:
       mysqldb:
+        condition: service_healthy
+      migration-test-db:
         condition: service_healthy
     environment:
       MAVEN_OPTS: -XX:+EnableDynamicAgentLoading
@@ -24,6 +40,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysqldb:3306/shopping_website?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: shopping
       SPRING_DATASOURCE_PASSWORD: shopping-ci-password
+      MIGRATION_TEST_DATASOURCE_URL: jdbc:mysql://migration-test-db:3306/shopping_website_migration_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      MIGRATION_TEST_DATASOURCE_USERNAME: shopping
+      MIGRATION_TEST_DATASOURCE_PASSWORD: shopping-ci-password
       CLOUDINARY_CLOUD_NAME: ci-placeholder
       CLOUDINARY_API_KEY: ci-placeholder
       CLOUDINARY_API_SECRET: ci-placeholder

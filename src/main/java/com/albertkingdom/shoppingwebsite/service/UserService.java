@@ -26,6 +26,8 @@ public interface UserService {
     Role saveRole(Role role);
     User getUser(String email);
     void addRoleToUser(String email, String roleName);
+    void grantSellerRole(Long userId, String actorEmail);
+    void revokeSellerRole(Long userId, String actorEmail);
     User getUserByEmailAndPassword(String email, String password);
     List<UserResponse> getAllUsers();
 }

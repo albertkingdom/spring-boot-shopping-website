@@ -170,11 +170,26 @@ spring.flyway.baseline-version=1
 - `ddl-auto=validate`：Hibernate 只驗證 entity 對到 table，**永遠不改 schema**
 - `baseline-on-migrate=true`：允許在既有 DB 上首次啟用 Flyway
 
-## CI 與 Testcontainers
+## 測試環境為什麼有兩個 MySQL database
 
-CI 用 GitHub Actions 內建的 MySQL service，每次都是乾淨 DB → Flyway 執行 V1 → 測試。
+`docker-compose.test.yml` 會建立兩個獨立的 MySQL service／database，但這不是正式系統的部署架構，而是為了讓不同類型的測試互不破壞：
 
-之後 Batch 8（Java 21 升級）完成後，會導入 Testcontainers 讓本地 `./mvnw verify` 也自動起 MySQL container，不再需要手動 `docker compose up mysqldb`。目前 Java 8 + Testcontainers 1.19 對 Docker Desktop for Mac 相容有問題，延後處理。
+| Service | Database | 用途 |
+|---|---|---|
+| `mysqldb` | `shopping_website` | Spring Boot `@SpringBootTest` 使用的應用程式資料庫；啟動時由 Flyway 套用完整 migration，驗證目前 entity、schema 與 service 行為 |
+| `migration-test-db` | `shopping_website_migration_test` | migration upgrade test 專用；測試會刻意從 V4／V5 開始、插入舊資料，再升級到最新版本，並在每個測試後執行 Flyway `clean()` |
+
+兩者不能共用，因為 migration upgrade test 需要反覆切換 schema 版本並清除整個測試 schema。如果共用應用程式資料庫，可能清掉 Spring context 正在使用的 tables，造成測試互相干擾或結果依執行順序改變。
+
+本機整合測試與 GitHub Actions CI 都直接執行這份 Compose 設定，確保使用相同的 Java 21、兩個 database、Flyway migration 與 cleanup 行為：
+
+```bash
+MAVEN_GOAL=verify docker compose -p shopping-test \
+  -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test
+docker compose -p shopping-test -f docker-compose.test.yml down --volumes --remove-orphans
+```
+
+這兩個 database 都是測試用、可刪除的資料；它們與長久保存的 `shopping-dev` named volume 分離，不會共用本機開發資料。
 
 ## 常見錯誤
 
@@ -196,7 +211,7 @@ Column 型別跟 entity 不符。例：entity 用 `BigDecimal`，SQL 建 `FLOAT`
 
 ## Seed data
 
-`V4__seed_roles.sql` inserts the two roles the application code references:
+`V4__seed_roles.sql` inserts the two baseline roles the application code references:
 
 ```sql
 INSERT IGNORE INTO roles (name) VALUES ('ROLE_USER');
@@ -205,7 +220,9 @@ INSERT IGNORE INTO roles (name) VALUES ('ROLE_ADMIN');
 
 `INSERT IGNORE` keeps it safe against databases that were manually seeded with the same names before Flyway was introduced. `UserService.register` looks up `ROLE_USER` by name (not id), so the actual id doesn't matter.
 
-The two seed rows are the only seed the application must have to boot. Everything else (products, admin accounts) is bootstrapped separately.
+`V5__add_seller_ownership.sql` additionally creates `ROLE_SELLER` only when no row with that name already exists, then adds nullable `product.seller_id` and `order_item.seller_id` with foreign keys and indexes. The order item value is the historical seller snapshot. The nullable product column deliberately leaves pre-existing catalog items unassigned: only a platform admin may manage them, and a seller cannot claim them accidentally.
+
+These role rows are the only seed the application must have to boot. Everything else (products, admin accounts) is bootstrapped separately.
 
 ## Admin bootstrap
 

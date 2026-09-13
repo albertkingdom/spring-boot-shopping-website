@@ -1,16 +1,10 @@
-import SideNav from "./SideNav";
-import styles from "../style/App.module.css";
 import { Outlet } from "react-router-dom";
+import BackofficeShell from "./BackofficeShell";
 
-export default function Seller() {
+export default function Seller({ userRole = [] }) {
   return (
-    <div className={`${styles.main_content} d-flex`}>
-      <SideNav />
-      <div className="pt-3 col-10">
-        <Outlet />
-      </div>
-      
-      
-    </div>
+    <BackofficeShell workspace="seller" userRole={userRole}>
+      <Outlet />
+    </BackofficeShell>
   );
 }

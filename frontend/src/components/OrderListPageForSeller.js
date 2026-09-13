@@ -1,79 +1,54 @@
 import { useState, useEffect } from "react";
-import { Container, Table, Button } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
-import { MdDeleteOutline } from "react-icons/md";
+import { Alert, Container, Table, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { updateAccessToken } from "../util/refreshTokenUtil";
 import Pagination from "./subComponents/Pagination";
 
-export default function OrderListPageForSeller() {
+export default function OrderListPageForSeller({ refreshAccessToken = updateAccessToken }) {
   let navigate = useNavigate();
   const [orderList, setOrderList] = useState([]);
   const [totalPage, setTotalPage] = useState(1);
   const [currentPage, setCurrentPage] = useState(0); // page start from 0
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchOrder(0)
-    updateAccessToken(fetchOrder);
+    loadOrders(0);
   }, []);
-  function fetchOrder(page = 0) {
-    console.log(`start to fetch order page ${page}`);
-    let accessToken = sessionStorage.getItem("access_token");
 
-    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/order?page=${page}`, {
-      // credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setOrderList(data.content)
-        setTotalPage(data.totalPages)
-        setCurrentPage(page)
-      }
-      );
+  async function loadOrders(page = 0) {
+    try {
+      await refreshAccessToken(() => fetchOrder(page));
+    } catch {
+      setError("登入已失效，請重新登入後再試。");
+    }
   }
-  function handleDelete(id) {
-    function deleteOrder() {
-      let accessToken = sessionStorage.getItem("access_token");
 
-      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/order/${id}`, {
-        method: "DELETE",
+  async function fetchOrder(page = 0) {
+    try {
+      const accessToken = sessionStorage.getItem("access_token");
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/seller/orders?page=${page}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      })
-        .then((response) => response.text())
-        .then((data) => {
-          console.log(data);
-
-          //navigate("/product")
-          setOrderList(orderList.filter((order) => order.id !== id));
-        });
+      });
+      if (!response.ok) {
+        setError(response.status === 403 ? "你沒有查看商家訂單的權限。" : "無法讀取我的訂單，請稍後再試。");
+        return;
+      }
+      const data = await response.json();
+      setOrderList(data.content || []);
+      setTotalPage(Math.max(data.totalPages || 0, 1));
+      setCurrentPage(page);
+      setError(null);
+    } catch {
+      setError("無法讀取我的訂單，請稍後再試。");
     }
-    updateAccessToken(deleteOrder);
   }
-  // function onClickNextPage(e) {
-  //   e.preventDefault();
-  //   if (currentPage + 1 === totalPage) {
-  //     return
-  //   }
-  //   fetchOrder(currentPage + 1)
-  // }
-  // function onClickPreviousPage(e) {
-  //   e.preventDefault();
-  //   if (currentPage === 0) {
-  //     return
-  //   }
-  //   fetchOrder(currentPage - 1)
-  // }
-  // function onClickPage(e, pageVisable) {
-  //   e.preventDefault();
-  //   fetchOrder(pageVisable - 1)
-  // }
   function formatDate(dateStr) {
+    if (!dateStr) {
+      return "—";
+    }
     let dateObj = new Date(dateStr)
     let year = dateObj.getFullYear()
     let month = dateObj.getMonth() + 1
@@ -85,49 +60,52 @@ export default function OrderListPageForSeller() {
   }
   return (
     <Container>
-
+      {error && <Alert variant="danger">{error}</Alert>}
       <Pagination
         totalPage={totalPage}
         currentPage={currentPage}
-        fetch={fetchOrder} />
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            {/* {isDeleteMode ? <td>delete</td> : null} */}
-            <th>id</th>
-            <th>userId</th>
-            <th>order price</th>
-            <th>訂單成立時間</th>
-            <th>Edit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orderList.map((order) => (
-            <tr key={order.id}>
-
-              <td>{order.id}</td>
-              <td>{order.userId}</td>
-              <td>{order.priceSum}</td>
-              <td>{formatDate(order.createdAt)}</td>
-              <td>
-                <Button
-                  variant="outline-secondary"
-                  onClick={() => navigate(`/seller/editOrder/${order.id}`)}
-                  className="me-2"
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  onClick={() => handleDelete(order.id)}
-                >
-                  <MdDeleteOutline />
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+        fetch={loadOrders} />
+      {orderList.length === 0 && !error ? (
+        <Alert variant="info" role="status">
+          <Alert.Heading>目前沒有訂單</Alert.Heading>
+          <p>當你的商品售出後，相關訂單會顯示在這裡。</p>
+          <Button variant="outline-primary" onClick={() => navigate("/seller/product_list_page_seller")}>
+            查看我的商品
+          </Button>
+        </Alert>
+      ) : (
+        <div className="table-responsive">
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>買家 Email</th>
+                <th>本店小計</th>
+                <th>訂單成立時間</th>
+                <th>詳情</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderList.map((order) => (
+                <tr key={order.id}>
+                  <td>{order.id}</td>
+                  <td>{order.buyerEmail}</td>
+                  <td>{order.sellerSubtotal}</td>
+                  <td>{formatDate(order.createdAt)}</td>
+                  <td>
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => navigate(`/seller/orders/${order.id}`)}
+                    >
+                      查看
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      )}
     </Container>
   );
 }

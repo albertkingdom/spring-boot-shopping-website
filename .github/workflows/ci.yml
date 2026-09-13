@@ -20,47 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: shopping_website
-          MYSQL_USER: shopping
-          MYSQL_PASSWORD: shopping-ci-password
-          MYSQL_ROOT_PASSWORD: root-ci-password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -proot-ci-password"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
-    env:
-      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/shopping_website?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: shopping
-      SPRING_DATASOURCE_PASSWORD: shopping-ci-password
-      CLOUDINARY_CLOUD_NAME: ci-placeholder
-      CLOUDINARY_API_KEY: ci-placeholder
-      CLOUDINARY_API_SECRET: ci-placeholder
-      JWT_SECRET: ci-jwt-secret-placeholder-at-least-32-bytes
-      JWT_ISSUER: shopping-ci
-      JWT_AUDIENCE: shopping-ci-api
-      SPRING_PROFILES_ACTIVE: dev
-
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Set up Java 21
-        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
-        with:
-          distribution: temurin
-          java-version: "21"
-          cache: maven
+      - name: Verify with Docker Compose test environment
+        run: docker compose -p shopping-test -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test
+        env:
+          MAVEN_GOAL: verify
 
-      - name: Verify with Maven
-        run: ./mvnw --batch-mode --no-transfer-progress verify
+      - name: Clean up Docker Compose test environment
+        if: ${{ always() }}
+        run: docker compose -p shopping-test -f docker-compose.test.yml down --volumes --remove-orphans
 
       - name: Build backend image
         run: docker build --tag shopping-website-backend:ci .

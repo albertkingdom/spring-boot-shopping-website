@@ -1,6 +1,6 @@
-## 購物網站 side project 後端
+## 購物網站 side project
 
-前端 repository：https://github.com/albertkingdom/react-shopping-website-for-spring-boot
+此 repository 同時包含 Spring Boot API 與 `frontend/` React 前端；舊前端 repository 僅保留為歷史來源。
 
 舊的展示連結：https://reurl.cc/85DVxy（歷史展示資訊，不代表本專案目前的部署環境）
 
@@ -10,11 +10,16 @@
 - 登入
 - 購物車、下訂單
 ### 後台
-- 上架、下架商品、修改商品資訊
-- 檢視訂單、刪除訂單
+- 平台管理員授予與撤銷商家角色
+- 商家上架、下架與修改自己的商品
+- 商家只檢視含有自己商品的訂單項目與本店小計
 
 ### 權限管理
-只有admin帳號可以進入後台
+- `ROLE_ADMIN`：平台全站管理員，可管理商家資格與既有全站管理功能。
+- `ROLE_SELLER`：經平台管理員授予後，可使用商家中心；只能管理自己商品與讀取自己訂單項目。
+- `ROLE_USER`：一般買家；不能進入平台或商家後台。
+
+商家新增／更新／刪除商品使用既有 `/api/products/**`；後端從登入者決定商品 owner。商家清單與訂單必須使用 `/api/seller/products`、`/api/seller/orders`，不能以公開或 admin API 在前端過濾。詳見 [多商家規格](docs/specs/multi-seller-access.md)。
 
 ## 使用技術
 - java spring boot框架
@@ -24,7 +29,7 @@
 
 ## 環境與啟動方式
 
-目前 production **尚未部署**。staging 已由 GitHub Actions 發布 private GHCR arm64 image，並在 Mac mini 自動部署及通過 loopback smoke test；其 runner、私密環境檔、Cloudflare Tunnel 與 Access 門禁均已啟用。請勿將本機 `.env` 或 Docker volume 當作正式環境。
+staging 與 production 均由 GitHub Actions 發布 private GHCR arm64 image，並在 Mac mini 以獨立資料庫、私密環境檔與 Cloudflare Tunnel 部署。請勿將本機 `.env` 或 Docker volume 當作正式環境。
 
 ### 目前：本機整合環境
 

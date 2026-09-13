@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Form, Button, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { updateAccessToken } from "../util/refreshTokenUtil";
 
-function CreateProduct() {
+function CreateProduct({ returnTo = "/seller/product_list_page_seller", createEndpoint = "/api/products" }) {
   let navigate = useNavigate();
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState(0);
-  const [formFormatError, setFormFormatError] = useState({});
   const [productNameFormatError, setproductNameFormatError] = useState(null)
   const [productPriceFormatError, setproductPriceFormatError] = useState(null)
 
@@ -26,26 +25,27 @@ function CreateProduct() {
       const formData = new FormData();
       formData.append("productName", e.target.productName.value);
       formData.append("productPrice", e.target.productPrice.value);
-      formData.append("productImage", e.target.image.files[0]);
+      if (e.target.image.files[0]) {
+        formData.append("productImage", e.target.image.files[0]);
+      }
 
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}${createEndpoint}`, {
         method: "POST",
         body: formData,
         headers: {
           Authorization: `Bearer ${accessToken}`,
         }
       })
-      if (response.status === 200) {
+      if (response.status === 201) {
         const data = await response.json()
         console.log(data);
         if (data.id != null) {
-          navigate("/seller/product_list_page_seller");
+          navigate(returnTo);
         }
       }
       if (response.status === 400) {
         const data = await response.json()
         console.log(data)
-        setFormFormatError(data)
         handleFormatError(data)
       }
 
