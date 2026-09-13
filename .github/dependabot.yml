@@ -21,6 +21,17 @@ updates:
         applies-to: security-updates
         patterns:
           - "*"
+    ignore:
+      # React and web-vitals major upgrades require coordinated frontend migrations.
+      - dependency-name: "react"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "react-dom"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "web-vitals"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: maven
     directory: /
@@ -36,3 +47,11 @@ updates:
         applies-to: security-updates
         patterns:
           - "*"
+    ignore:
+      # Spring Boot and Springdoc major upgrades are separate framework migrations.
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "org.springdoc:springdoc-openapi-starter-webmvc-ui"
+        update-types:
+          - "version-update:semver-major"
