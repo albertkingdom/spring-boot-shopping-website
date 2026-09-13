@@ -21,7 +21,7 @@ import SellerHome from "./components/SellerHome";
 import { useState } from "react";
 import RouteNeedAdmin from "./components/RouteNeedAdmin";
 import RouteNeedSeller from "./components/RouteNeedSeller";
-import jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { ThemeProvider } from "./components/ThemeContext";
 
 function App() {
@@ -32,7 +32,7 @@ function App() {
       return [];
     }
     try {
-      return jwt_decode(accessToken).roles || [];
+      return jwtDecode(accessToken).roles || [];
     } catch (error) {
       return [];
     }

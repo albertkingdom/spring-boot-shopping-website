@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Container, Button, Form, ButtonGroup, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import styles from "../style/Login.module.css"
 
 function Login({ userName, setUser, setRole }) {
@@ -43,7 +43,7 @@ function Login({ userName, setUser, setRole }) {
       sessionStorage.setItem("access_token", accessToken);
       sessionStorage.setItem("refresh_token", refreshToken);
 
-      let decodedToken = jwt_decode(accessToken);
+      let decodedToken = jwtDecode(accessToken);
       const { roles, exp } = decodedToken;
       console.log(decodedToken);
       setRole(roles); // ["ROLE_USER"]
