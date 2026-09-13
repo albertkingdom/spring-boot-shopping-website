@@ -1,4 +1,4 @@
-import jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 export async function updateAccessToken(complete) {
   let tokenExpireAt = sessionStorage.getItem("token_expireAt");
@@ -23,7 +23,7 @@ export async function updateAccessToken(complete) {
       throw new Error("Refresh response did not contain an access token");
     }
     sessionStorage.setItem("access_token", accessToken);
-    let decodedToken = jwt_decode(accessToken);
+    let decodedToken = jwtDecode(accessToken);
     const { exp } = decodedToken;
 
     sessionStorage.setItem("token_expireAt", exp * 1000);
