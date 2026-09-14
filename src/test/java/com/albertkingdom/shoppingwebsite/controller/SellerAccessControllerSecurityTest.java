@@ -11,10 +11,10 @@ import com.albertkingdom.shoppingwebsite.util.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
@@ -36,17 +36,17 @@ class SellerAccessControllerSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @MockBean
+    @MockitoBean
     private UserServiceImpl userService;
-    @MockBean
+    @MockitoBean
     private ProductService productService;
-    @MockBean
+    @MockitoBean
     private OrderService orderService;
-    @MockBean
+    @MockitoBean
     private AuthenticationManager authenticationManager;
-    @MockBean
+    @MockitoBean
     private JwtUtil jwtUtil;
-    @MockBean
+    @MockitoBean
     private com.albertkingdom.shoppingwebsite.service.CloudinaryService cloudinaryService;
 
     @Test

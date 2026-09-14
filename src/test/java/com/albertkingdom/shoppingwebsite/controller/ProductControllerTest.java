@@ -17,10 +17,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.mock.web.MockMultipartFile;
@@ -44,17 +44,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(ProductController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ProductControllerTest {
-    @MockBean
+    @MockitoBean
     ProductService productService;
-    @MockBean
+    @MockitoBean
     private ProductRepository productRepository;
     @Autowired
     private MockMvc mockMvc;
-    @MockBean
+    @MockitoBean
     UserDetailsService userDetailsService;
-    @MockBean
+    @MockitoBean
     JwtUtil jwtUtil;
-    @MockBean
+    @MockitoBean
     CloudinaryService cloudinaryService;
 
     @Autowired
