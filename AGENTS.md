@@ -130,7 +130,7 @@
 - PR 保持小而聚焦，說明問題、解法、風險、資料庫或 API 影響，以及實際執行的測試。
 - 合併前必須通過 Maven tests、必要的 integration tests 與 secret scanning。
 - 有 schema 或 API breaking change 時，PR 必須附 migration 與相容性說明。
-- 合併策略使用 squash merge，讓 `master` 保持線性且每個 PR 對應一個主要提交。
+- 合併策略使用 merge commit（不使用 squash 或 rebase merge），保留 PR 內每個 commit 的歷史；因此 PR 內的 commit 都要符合 Commits 規則。
 - 合併前更新至最新 `master` 並解決衝突；不要對共享的 `master` force push。
 - 合併後刪除工作分支。
 
