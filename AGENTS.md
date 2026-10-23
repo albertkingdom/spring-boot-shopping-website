@@ -74,7 +74,7 @@
 
 - 所有 Maven 指令使用 repository 內的 wrapper：`./mvnw`。
 - 若本機預設 JDK 與 `pom.xml` 要求的 Java 版本不相容，優先以對應 Java Docker image 在容器內執行 `./mvnw`；除非使用者明確授權，不為了測試安裝 JDK 或變更使用者的系統預設 Java。
-- 本機執行需要 MySQL、Flyway 或 Spring context 的完整後端驗證時，優先使用既有測試 compose：`MAVEN_GOAL=verify docker compose -p shopping-test -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test`；測試結束後以 `docker compose -p shopping-test -f docker-compose.test.yml down --volumes --remove-orphans` 清除暫時 container、network 與測試資料。
+- 本機執行需要 MySQL、Flyway 或 Spring context 的完整後端驗證時，優先使用既有測試 compose：`MAVEN_GOAL=verify docker compose -p shopping-test -f docker-compose.test.yml up --abort-on-container-exit --exit-code-from test`；不得以未注入 datasource 環境變數的裸 Maven container 作為完整測試依據；測試結束後以 `docker compose -p shopping-test -f docker-compose.test.yml down --volumes --remove-orphans` 清除暫時 container、network 與測試資料。
 - 若 container runtime 不可用，但對應 JDK 已安裝，可在單一命令以 `JAVA_HOME` 明確指定該 JDK 執行 `./mvnw`；不得修改全域 shell 設定或系統預設 Java。
 - 容器化測試仍必須執行 `./mvnw test` 或 `./mvnw verify`；production Dockerfile 中的 `-DskipTests` build 不得視為測試驗證。
 - 修改前先確認相關測試；修改後至少執行受影響範圍的測試。
@@ -130,7 +130,7 @@
 - PR 保持小而聚焦，說明問題、解法、風險、資料庫或 API 影響，以及實際執行的測試。
 - 合併前必須通過 Maven tests、必要的 integration tests 與 secret scanning。
 - 有 schema 或 API breaking change 時，PR 必須附 migration 與相容性說明。
-- 合併策略使用 squash merge，讓 `master` 保持線性且每個 PR 對應一個主要提交。
+- 合併策略使用 merge commit（不使用 squash 或 rebase merge），保留 PR 內每個 commit 的歷史；因此 PR 內的 commit 都要符合 Commits 規則。
 - 合併前更新至最新 `master` 並解決衝突；不要對共享的 `master` force push。
 - 合併後刪除工作分支。
 
