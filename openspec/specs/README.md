@@ -11,6 +11,7 @@
 | [orders](orders/spec.md) | 下單、價格計算、snapshot 與 seller 訂單 scope | `current-system.md`、`multi-seller-access.md` |
 | [backoffice-ui](backoffice-ui/spec.md) | admin／seller workspace、導覽、狀態、主題與 RWD | `multi-seller-access.md` |
 | [deployment-environments](deployment-environments/spec.md) | dev、staging、production 隔離與部署 promotion | `environment-separation.md` |
+| [build-dependency-security](build-dependency-security/spec.md) | 前端工具鏈壓縮請求與依賴修補驗收 | `fix-body-parser-dos` |
 
 ## 維護規則
 
